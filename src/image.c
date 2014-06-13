@@ -15,7 +15,7 @@
 
 int image_blendMode = IMAGE_NORMAL;
 int image_flip = 0;
-unsigned int image_color = 0xFFFFFFFF;
+unsigned int image_color = 0x0f0f0f0f;
 
 
 void image_setBlendMode(int mode) {
