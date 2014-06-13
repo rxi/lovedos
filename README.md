@@ -5,7 +5,8 @@ A framework for making 2D DOS games in Lua. LoveDOS provides a subset of the
 ![screenshot](https://cloud.githubusercontent.com/assets/3920290/3274842/db280102-f334-11e3-9967-f27f01d34d52.gif)
 
 ## Getting started
-You can download LoveDOS from the [releases page](releases). If you're not
+You can download LoveDOS from the
+[releases page](https://github.com/rxi/lovedos/releases). If you're not
 using DOS as your operating system then [DOSbox](http://www.dosbox.com/) can be
 used to emulate a DOS computer.
 
@@ -47,4 +48,4 @@ This library is free software; you can redistribute it and/or modify it under
 the terms of the MIT license. See [LICENSE](LICENSE) for details.
 
 LoveDOS includes Lua (MIT license). The full license for Lua can be found at
-the bottom of the [src/lib/lua.h](src/lib/lua.h) file.
+the bottom of the [src/lib/lua/lua.h](src/lib/lua/lua.h) file.

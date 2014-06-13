@@ -1,7 +1,7 @@
 # Building LoveDOS
-Although LoveDOS provides precompiled binaries on the [releases
-page](releases), you may still wish to build the project's source if you want
-to make changes to the project.
+Although LoveDOS provides precompiled binaries on the
+[releases page](https://github.com/rxi/lovedos/releases), you may still wish to
+build the project's source if you want to make changes to the project.
 
 
 ## Requirements
@@ -13,7 +13,8 @@ LoveDOS depends on the following being installed before building:
 
 
 ## Building
-To compile you should clone the git repository or [download the .zip](#) of it.
+To compile you should clone the git repository or
+[download the .zip](https://github.com/rxi/lovedos/archive/master.zip) of it.
 Once this is done you should open the build.py file in an editor and check to
 make sure the COMPILER variable is set to the correct command as to run DJGPP's
 gcc executable; change the COMPILER variable's value if it is not set to the
