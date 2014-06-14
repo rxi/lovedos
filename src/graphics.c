@@ -431,7 +431,8 @@ int l_graphics_circle(lua_State *L) {
 
 
 int l_graphics_print(lua_State *L) {
-  const char *str = luaL_checkstring(L, 1);
+  luaL_checkany(L, 1);
+  const char *str = luaL_tolstring(L, 1, NULL);
   int x = luaL_checkint(L, 2);
   int y = luaL_checkint(L, 3);
   font_blit(graphics_font, graphics_canvas->data, graphics_canvas->width,
