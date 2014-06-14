@@ -18,11 +18,11 @@ image_t  *graphics_screen;
 font_t   *graphics_defaultFont;
 
 image_t  *graphics_canvas;
-pixel_t   graphics_backgroundColor = 0x0;
-pixel_t   graphics_color = 0xf;
-int       graphics_blendMode = IMAGE_NORMAL;
 font_t   *graphics_font;
-int       graphics_flip = 0;
+pixel_t   graphics_backgroundColor;
+pixel_t   graphics_color;
+int       graphics_blendMode;
+int       graphics_flip;
 
 
 
@@ -479,10 +479,7 @@ int luaopen_graphics(lua_State *L) {
   lua_pushlightuserdata(L, &graphics_screen);
   lua_pushvalue(L, -2);
   lua_settable(L, LUA_REGISTRYINDEX);
-  lua_pop(L, 1); /* Pop the canvas object */
-  /* Set default canvas */
-  lua_pushcfunction(L, l_graphics_setCanvas);
-  lua_call(L, 0, 0);
+  lua_pop(L, 1); /* Pop the Image object */
 
   /* Init default font */
   lua_pushcfunction(L, l_font_new);
@@ -493,8 +490,9 @@ int luaopen_graphics(lua_State *L) {
   lua_pushvalue(L, -2);
   lua_settable(L, LUA_REGISTRYINDEX);
   lua_pop(L, 1); /* Pop the Font object */
-  /* Set default font */
-  lua_pushcfunction(L, l_graphics_setFont);
+
+  /* Reset all state settings to their defaults */
+  lua_pushcfunction(L, l_graphics_reset);
   lua_call(L, 0, 0);
 
   return 1;
