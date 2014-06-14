@@ -96,6 +96,10 @@ Returns true if images are set to be horizontally flipped when drawn
 Set whether images should be horizontally flipped when draw. If `enable` is not
 passed then this is set to false by default.
 
+##### love.graphics.reset()
+Resets the font, color, background color, canvas, blend mode and flip mode to
+their defaults.
+
 ##### love.graphics.clear([color])
 Clears the screen (or canvas) to the `color`. If no `color` argument is given
 then the background color is used.

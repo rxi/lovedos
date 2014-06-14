@@ -185,6 +185,25 @@ int l_graphics_setFlip(lua_State *L) {
 }
 
 
+int l_graphics_reset(lua_State *L) {
+  int (*funcs[])(lua_State*) = {
+    l_graphics_setBackgroundColor,
+    l_graphics_setColor,
+    l_graphics_setBlendMode,
+    l_graphics_setFont,
+    l_graphics_setCanvas,
+    l_graphics_setFlip,
+    NULL,
+  };
+  int i;
+  for (i = 0; funcs[i]; i++) {
+    lua_pushcfunction(L, funcs[i]);
+    lua_call(L, 0, 0);
+  }
+  return 0;
+}
+
+
 int l_graphics_clear(lua_State *L) {
   int color = lua_isnoneornil(L, 1) ? graphics_backgroundColor
                                     : luaL_checkint(L, 1);
@@ -433,6 +452,7 @@ int luaopen_graphics(lua_State *L) {
     { "setCanvas",          l_graphics_setCanvas          },
     { "getFlip",            l_graphics_getFlip            },
     { "setFlip",            l_graphics_setFlip            },
+    { "reset",              l_graphics_reset              },
     { "clear",              l_graphics_clear              },
     { "present",            l_graphics_present            },
     { "draw",               l_graphics_draw               },
