@@ -42,7 +42,7 @@ int luaopen_love(lua_State *L) {
 
   /* Init love module */
   luaL_Reg reg[] = {
-    { "getVerson",  l_love_getVersion },
+    { "getVersion",   l_love_getVersion },
     { 0, 0 },
   };
   luaL_newlib(L, reg);
