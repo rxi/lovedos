@@ -22,6 +22,24 @@ const char *font_init(font_t *self, const char *filename) {
 }
 
 
+const char *font_initEmbedded(font_t *self) {
+  #include "font_embedded.c"
+  memset(self, 0, sizeof(*self));
+  image_initBlank(&self->image, font_width, font_height);
+  int i, j;
+  char *p = font_data;
+  for (i = 0; i < font_width * font_height; i += 8) {
+    for (j = 0; j < 8; j++) {
+      int res = (*p >> j) & 1;
+      self->image.data[i + j] = res ? 0xf : 0x00;
+      self->image.mask[i + j] = res ? 0x0 : 0xff;
+    }
+    p++;
+  }
+  return NULL;
+}
+
+
 void font_deinit(font_t *self) {
   image_deinit(&self->image);
 }

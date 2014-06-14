@@ -24,25 +24,10 @@ font_t   *graphics_font = &graphics_defaultFont;
 int       graphics_flip = 0;
 
 
-static void graphics_initDefaultFont(void) {
-  #include "font_embedded.c"
-  image_initBlank(&graphics_defaultFont.image, font_width, font_height);
-  int i, j;
-  char *p = font_data;
-  for (i = 0; i < font_width * font_height; i += 8) {
-    for (j = 0; j < 8; j++) {
-      int res = (*p >> j) & 1;
-      graphics_defaultFont.image.data[i + j] = res ? 0xf : 0x00;
-      graphics_defaultFont.image.mask[i + j] = res ? 0x0 : 0xff;
-    }
-    p++;
-  }
-}
-
 
 void graphics_init(void) {
   image_initBlank(&graphics_screen, VGA_WIDTH, VGA_HEIGHT);
-  graphics_initDefaultFont();
+  font_initEmbedded(&graphics_defaultFont);
 }
 
 
