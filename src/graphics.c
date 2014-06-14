@@ -130,18 +130,14 @@ int l_graphics_getFont(lua_State *L) {
 
 int l_graphics_setFont(lua_State *L) {
   font_t *oldFont = graphics_font;
-  int argIdx = 1;
   if (lua_isnoneornil(L, 1)) {
     /* If no arguments are given we use the default embedded font, grab it
-     * from the registry and get its index */
-    graphics_font = graphics_defaultFont;
+     * from the registry and set it as the first argument */
     lua_pushlightuserdata(L, &graphics_defaultFont);
     lua_gettable(L, LUA_REGISTRYINDEX);
-    argIdx = lua_absindex(L, -1);
-  } else {
-    /* Set argument font */
-    graphics_font = luaobj_checkudata(L, 1, LUAOBJ_TYPE_FONT);
+    lua_insert(L, 1);
   }
+  graphics_font = luaobj_checkudata(L, 1, LUAOBJ_TYPE_FONT);
   /* Remove old font from registry. This is done after we know the args are
    * so that the font remains unchanged if an error occurs */
   if (oldFont) {
@@ -151,7 +147,7 @@ int l_graphics_setFont(lua_State *L) {
   }
   /* Add new font to registry */
   lua_pushlightuserdata(L, graphics_font);
-  lua_pushvalue(L, argIdx);
+  lua_pushvalue(L, 1);
   lua_settable(L, LUA_REGISTRYINDEX);
   return 0;
 }
@@ -166,18 +162,14 @@ int l_graphics_getCanvas(lua_State *L) {
 
 int l_graphics_setCanvas(lua_State *L) {
   image_t *oldCanvas = graphics_canvas;
-  int argIdx = 1;
   if (lua_isnoneornil(L, 1)) {
     /* If no arguments are given we use the screen canvas, grab it from the
      * registry and get its index */
-    graphics_canvas = graphics_screen;
     lua_pushlightuserdata(L, &graphics_screen);
     lua_gettable(L, LUA_REGISTRYINDEX);
-    argIdx = lua_absindex(L, -1);
-  } else {
-    /* Set argument canvas */
-    graphics_canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
-  }
+    lua_insert(L, 1);
+  } 
+  graphics_canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
   /* Remove old canvas from registry. This is done after we know the args are
    * so that the canvas remains unchanged if an error occurs */
   if (oldCanvas) {
@@ -187,7 +179,7 @@ int l_graphics_setCanvas(lua_State *L) {
   }
   /* Add new canvas to registry */
   lua_pushlightuserdata(L, graphics_canvas);
-  lua_pushvalue(L, argIdx);
+  lua_pushvalue(L, 1);
   lua_settable(L, LUA_REGISTRYINDEX);
   return 0;
 }
