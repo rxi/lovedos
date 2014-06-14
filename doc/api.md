@@ -266,3 +266,9 @@ pressed key.
 Called when the user releases a key. `code` is the scancode value for the
 released key.
 
+##### love.errhand(err)
+Called when an unprotected error occurs in any of the callback functions; `err`
+is the error message. Setting this function overrides the default error
+behaviour of resetting the VGA mode, printing the error and exiting the
+program.
+
