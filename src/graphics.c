@@ -14,24 +14,23 @@
 #include "vga.h"
 #include "luaobj.h"
 
-image_t   graphics_screen;
-image_t  *graphics_canvas = &graphics_screen;
+image_t  *graphics_screen;
+font_t   *graphics_defaultFont;
+
+image_t  *graphics_canvas;
 pixel_t   graphics_backgroundColor = 0x0;
 pixel_t   graphics_color = 0xf;
 int       graphics_blendMode = IMAGE_NORMAL;
-font_t   *graphics_defaultFont;
 font_t   *graphics_font;
 int       graphics_flip = 0;
 
 
 
 void graphics_init(void) {
-  image_initBlank(&graphics_screen, VGA_WIDTH, VGA_HEIGHT);
 }
 
 
 void graphics_deinit(void) {
-  image_deinit(&graphics_screen);
 }
 
 
@@ -41,20 +40,20 @@ void graphics_deinit(void) {
 
 
 int l_graphics_getDimensions(lua_State *L) {
-  lua_pushinteger(L, graphics_screen.width);
-  lua_pushinteger(L, graphics_screen.height);
+  lua_pushinteger(L, graphics_screen->width);
+  lua_pushinteger(L, graphics_screen->height);
   return 2;
 }
 
 
 int l_graphics_getWidth(lua_State *L) {
-  lua_pushinteger(L, graphics_screen.width);
+  lua_pushinteger(L, graphics_screen->width);
   return 1;
 }
 
 
 int l_graphics_getHeight(lua_State *L) {
-  lua_pushinteger(L, graphics_screen.height);
+  lua_pushinteger(L, graphics_screen->height);
   return 1;
 }
 
@@ -167,25 +166,29 @@ int l_graphics_getCanvas(lua_State *L) {
 
 int l_graphics_setCanvas(lua_State *L) {
   image_t *oldCanvas = graphics_canvas;
+  int argIdx = 1;
   if (lua_isnoneornil(L, 1)) {
-    /* If no arguments are given we use the screen canvas */
-    graphics_canvas = &graphics_screen;
+    /* If no arguments are given we use the screen canvas, grab it from the
+     * registry and get its index */
+    graphics_canvas = graphics_screen;
+    lua_pushlightuserdata(L, &graphics_screen);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    argIdx = lua_absindex(L, -1);
   } else {
     /* Set argument canvas */
-    image_t *canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
-    graphics_canvas = canvas;
-    /* Add new canvas to registry */
-    lua_pushlightuserdata(L, canvas);
-    lua_pushvalue(L, 1);
-    lua_settable(L, LUA_REGISTRYINDEX);
+    graphics_canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
   }
-  /* Remove old canvas from registry. This is done after setting the new canvas
-   * so that the canvas can remain unchanged if an error occurs */
-  if (graphics_canvas != oldCanvas) {
+  /* Remove old canvas from registry. This is done after we know the args are
+   * so that the canvas remains unchanged if an error occurs */
+  if (oldCanvas) {
     lua_pushlightuserdata(L, oldCanvas);
     lua_pushnil(L);
     lua_settable(L, LUA_REGISTRYINDEX);
   }
+  /* Add new canvas to registry */
+  lua_pushlightuserdata(L, graphics_canvas);
+  lua_pushvalue(L, argIdx);
+  lua_settable(L, LUA_REGISTRYINDEX);
   return 0;
 }
 
@@ -213,7 +216,7 @@ int l_graphics_clear(lua_State *L) {
 
 
 int l_graphics_present(lua_State *L) {
-  vga_update(graphics_screen.data);
+  vga_update(graphics_screen->data);
   return 0;
 }
 
@@ -467,6 +470,21 @@ int luaopen_graphics(lua_State *L) {
   };
   luaL_newlib(L, reg);
 
+  /* Init screen canvas */
+  lua_pushcfunction(L, l_image_newCanvas);
+  lua_pushinteger(L, VGA_WIDTH);
+  lua_pushinteger(L, VGA_HEIGHT);
+  lua_call(L, 2, 1);
+  graphics_screen = luaobj_checkudata(L, -1, LUAOBJ_TYPE_IMAGE);
+  /* Add screen canvas to registry */
+  lua_pushlightuserdata(L, &graphics_screen);
+  lua_pushvalue(L, -2);
+  lua_settable(L, LUA_REGISTRYINDEX);
+  lua_pop(L, 1); /* Pop the canvas object */
+  /* Set default canvas */
+  lua_pushcfunction(L, l_graphics_setCanvas);
+  lua_call(L, 0, 0);
+
   /* Init default font */
   lua_pushcfunction(L, l_font_new);
   lua_call(L, 0, 1);
@@ -479,7 +497,6 @@ int luaopen_graphics(lua_State *L) {
   /* Set default font */
   lua_pushcfunction(L, l_graphics_setFont);
   lua_call(L, 0, 0);
-
 
   return 1;
 }
