@@ -12,7 +12,6 @@ luaobj.c          | Helper functions for lua udata objects
 love.c            | The core `love` module
 system.c          | `love.system` module
 timer.c           | `love.timer` module
-graphics.h        | `love.graphics` prototype and typedefs
 graphics.c        | `love.graphics` module
 keyboard.h        | `love.keyboard` prototype and typedefs
 keyboard.c        | `love.keyboard` module and keyboard interrupt handling

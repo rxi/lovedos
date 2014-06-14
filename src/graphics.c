@@ -26,19 +26,6 @@ int       graphics_flip = 0;
 
 
 
-void graphics_init(void) {
-}
-
-
-void graphics_deinit(void) {
-}
-
-
-/**
- * Lua binds
- */
-
-
 int l_graphics_getDimensions(lua_State *L) {
   lua_pushinteger(L, graphics_screen->width);
   lua_pushinteger(L, graphics_screen->height);

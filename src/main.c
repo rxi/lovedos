@@ -14,7 +14,6 @@
 #include "lib/dmt/dmt.h"
 #include "vga.h"
 #include "luaobj.h"
-#include "graphics.h"
 #include "keyboard.h"
 #include "image.h"
 
@@ -24,7 +23,6 @@ static lua_State *L;
 static void deinit(void) {
   /* Deinit and clear up everything. Called at exit */
   vga_deinit();
-  graphics_deinit();
   keyboard_deinit();
   lua_close(L);
   dmt_dump(stdout);
@@ -38,7 +36,6 @@ int main(void) {
   /* Init everything */
   atexit(deinit);
   vga_init();
-  graphics_init();
   keyboard_init();
 
   /* Init lua */
