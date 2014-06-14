@@ -28,6 +28,13 @@ static void deinit(void) {
   dmt_dump(stdout);
 }
 
+static int onLuaPanic(lua_State *L) {
+  vga_deinit();
+  const char *err = lua_tostring(L, -1);
+  printf("lua panic: %s\n", err);
+  return 0;
+}
+
 
 int luaopen_love(lua_State *L);
 
@@ -40,6 +47,7 @@ int main(void) {
 
   /* Init lua */
   L = luaL_newstate();
+  lua_atpanic(L, onLuaPanic);
   luaL_openlibs(L);
   luaL_requiref(L, "love", luaopen_love, 1);
 
