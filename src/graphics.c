@@ -19,20 +19,18 @@ image_t  *graphics_canvas = &graphics_screen;
 pixel_t   graphics_backgroundColor = 0x0;
 pixel_t   graphics_color = 0xf;
 int       graphics_blendMode = IMAGE_NORMAL;
-font_t    graphics_defaultFont;
-font_t   *graphics_font = &graphics_defaultFont;
+font_t   *graphics_defaultFont;
+font_t   *graphics_font;
 int       graphics_flip = 0;
 
 
 
 void graphics_init(void) {
   image_initBlank(&graphics_screen, VGA_WIDTH, VGA_HEIGHT);
-  font_initEmbedded(&graphics_defaultFont);
 }
 
 
 void graphics_deinit(void) {
-  font_deinit(&graphics_defaultFont);
   image_deinit(&graphics_screen);
 }
 
@@ -133,25 +131,29 @@ int l_graphics_getFont(lua_State *L) {
 
 int l_graphics_setFont(lua_State *L) {
   font_t *oldFont = graphics_font;
+  int argIdx = 1;
   if (lua_isnoneornil(L, 1)) {
-    /* If no arguments are given we use the default embedded font */
-    graphics_font = &graphics_defaultFont;
+    /* If no arguments are given we use the default embedded font, grab it
+     * from the registry and get its index */
+    graphics_font = graphics_defaultFont;
+    lua_pushlightuserdata(L, &graphics_defaultFont);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    argIdx = lua_absindex(L, -1);
   } else {
     /* Set argument font */
-    font_t *font = luaobj_checkudata(L, 1, LUAOBJ_TYPE_FONT);
-    graphics_font = font;
-    /* Add new font to registry */
-    lua_pushlightuserdata(L, font);
-    lua_pushvalue(L, 1);
-    lua_settable(L, LUA_REGISTRYINDEX);
+    graphics_font = luaobj_checkudata(L, 1, LUAOBJ_TYPE_FONT);
   }
-  /* Remove old font from registry. This is done after setting the new font so
-   * that the font can remain unchanged if an error occurs */
-  if (graphics_font != oldFont) {
+  /* Remove old font from registry. This is done after we know the args are
+   * so that the font remains unchanged if an error occurs */
+  if (oldFont) {
     lua_pushlightuserdata(L, oldFont);
     lua_pushnil(L);
     lua_settable(L, LUA_REGISTRYINDEX);
   }
+  /* Add new font to registry */
+  lua_pushlightuserdata(L, graphics_font);
+  lua_pushvalue(L, argIdx);
+  lua_settable(L, LUA_REGISTRYINDEX);
   return 0;
 }
 
@@ -464,5 +466,20 @@ int luaopen_graphics(lua_State *L) {
     { 0, 0 },
   };
   luaL_newlib(L, reg);
+
+  /* Init default font */
+  lua_pushcfunction(L, l_font_new);
+  lua_call(L, 0, 1);
+  graphics_defaultFont = luaobj_checkudata(L, -1, LUAOBJ_TYPE_FONT);
+  /* Add default font to registry */
+  lua_pushlightuserdata(L, &graphics_defaultFont);
+  lua_pushvalue(L, -2);
+  lua_settable(L, LUA_REGISTRYINDEX);
+  lua_pop(L, 1); /* Pop the Font object */
+  /* Set default font */
+  lua_pushcfunction(L, l_graphics_setFont);
+  lua_call(L, 0, 0);
+
+
   return 1;
 }
