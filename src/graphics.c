@@ -126,7 +126,7 @@ int l_graphics_setFont(lua_State *L) {
   }
   graphics_font = luaobj_checkudata(L, 1, LUAOBJ_TYPE_FONT);
   /* Remove old font from registry. This is done after we know the args are
-   * so that the font remains unchanged if an error occurs */
+   * okay so that the font remains unchanged if an error occurs */
   if (oldFont) {
     lua_pushlightuserdata(L, oldFont);
     lua_pushnil(L);
@@ -151,14 +151,14 @@ int l_graphics_setCanvas(lua_State *L) {
   image_t *oldCanvas = graphics_canvas;
   if (lua_isnoneornil(L, 1)) {
     /* If no arguments are given we use the screen canvas, grab it from the
-     * registry and get its index */
+     * registry and set it as the first argument */
     lua_pushlightuserdata(L, &graphics_screen);
     lua_gettable(L, LUA_REGISTRYINDEX);
     lua_insert(L, 1);
   } 
   graphics_canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
   /* Remove old canvas from registry. This is done after we know the args are
-   * so that the canvas remains unchanged if an error occurs */
+   * okay so that the canvas remains unchanged if an error occurs */
   if (oldCanvas) {
     lua_pushlightuserdata(L, oldCanvas);
     lua_pushnil(L);
