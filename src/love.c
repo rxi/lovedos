@@ -7,7 +7,7 @@
 
 #include "luaobj.h"
 
-#define LOVE_VERSION "0.1.1"
+#define LOVE_VERSION "0.1.2"
 
 
 int l_love_getVersion(lua_State *L) {
