@@ -137,10 +137,11 @@ dimensions as the screen.
 ##### love.graphics.newQuad(x, y, width, height)
 Creates and returns a new quad.
 
-##### love.graphics.newFont(filename)
+##### love.graphics.newFont([filename])
 Creates and returns a new font. `filename` should be the name of a black and
 white 8bit .pcx image file representing all 256 characters in a 16 x 16
-character grid.
+character grid. If no `filename` is given then the default embedded font image
+is used.
 
 ##### love.graphics.present()
 Flips the current screen buffer with the displayed screen buffer. This is

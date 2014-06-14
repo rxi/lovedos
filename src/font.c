@@ -85,11 +85,15 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
 
 
 int l_font_new(lua_State *L) {
-  const char *filename = luaL_checkstring(L, 1);
+  const char *filename = lua_isnoneornil(L, 1) ? NULL : luaL_checkstring(L, 1);
   font_t *self = luaobj_newudata(L, sizeof(*self));
   luaobj_setclass(L, CLASS_TYPE, CLASS_NAME);
-  const char *err = font_init(self, filename);
-  if (err) luaL_error(L, err);
+  if (filename) {
+    const char *err = font_init(self, filename);
+    if (err) luaL_error(L, err);
+  } else {
+    font_initEmbedded(self);
+  }
   return 1;
 }
 
