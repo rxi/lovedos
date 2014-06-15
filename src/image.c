@@ -303,7 +303,7 @@ int l_image_setPixel(lua_State *L) {
   image_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
   int x = luaL_checkint(L, 2);
   int y = luaL_checkint(L, 3);
-  pixel_t color = luaL_checkint(L, 3);
+  pixel_t color = luaL_checkint(L, 4);
   image_setPixel(self, x, y, color);
   return 0;
 }
