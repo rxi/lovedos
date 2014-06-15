@@ -46,6 +46,7 @@ void font_deinit(font_t *self) {
 
 
 extern int image_blendMode;
+extern int image_flip;
 
 void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
                const char *str, int dx, int dy
@@ -58,8 +59,11 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
   const char *p = str;
   int x = dx;
   int y = dy;
+
   int oldBlendMode = image_blendMode;
+  int oldFlip = image_flip;
   image_blendMode = IMAGE_COLOR;
+  image_flip = 0;
 
   while (*p) {
     if (*p == '\n') {
@@ -76,6 +80,7 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
   }
 
   image_blendMode = oldBlendMode;
+  image_flip = oldFlip;
 }
 
 
