@@ -199,8 +199,8 @@ Returns the height in pixels of the image.
 Returns the color of the pixel at the position `x`, `y` of the image. If the
 position is outside of the image then 0 is returned.
 
-##### Image:setPixel(x, y)
-Sets the color of the pixel at the position `x`, `y` of the image. If the
+##### Image:setPixel(x, y, color)
+Sets the pixel of the image at the position `x`, `y` to `color`. If the
 position is outside of the image then no change is made.
 
 ##### Image:mapPixel(fn)
