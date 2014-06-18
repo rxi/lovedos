@@ -54,6 +54,8 @@ int main(void) {
   int res = luaL_dostring(L,
     "package.path = package.path .. ';' .."
                    "package.path:gsub('%?', 'lua/?')\n"
+    "local print = print\n"
+    "local xpcall = xpcall\n"
     "require 'main'\n"
     "if not love.run then\n"
       "function love.run()\n"
