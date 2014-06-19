@@ -76,13 +76,13 @@ Mode        | Description
 `"color"`   | Draws opaque pixels using the `love.graphics.setColor()` color
 
 ##### love.graphics.getFont()
-Returns the current font. Returns nil if the default font is being used.
+Returns the current font.
 
 ##### love.graphics.setFont([font])
 Sets the current font. If `font` is nil then the font is reset to the default.
 
 ##### love.graphics.getCanvas()
-Returns the current canvas. Returns nil if the default canvas is being used.
+Returns the current canvas.
 
 ##### love.graphics.setCanvas([image])
 Sets the current canvas which all the draw operations will draw to. If the
