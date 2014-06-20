@@ -17,6 +17,7 @@
 
 image_t  *graphics_screen;
 font_t   *graphics_defaultFont;
+int       graphics_defaultPalette;
 
 image_t  *graphics_canvas;
 font_t   *graphics_font;
@@ -198,6 +199,7 @@ int l_graphics_getPalette(lua_State *L) {
       lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 3);
     }
     return 1;
+
   } else {
     int idx = luaL_checkinteger(L, 1);
     if (idx < 0 || idx > 0xff) return 0;
@@ -214,7 +216,14 @@ int l_graphics_getPalette(lua_State *L) {
 
 int l_graphics_setPalette(lua_State *L) {
   #define CLAMP(x, a, b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
-  luaL_checkany(L, 1);
+  if (lua_isnoneornil(L, 1)) {
+    /* Set the first argument to the default palette if no arguments were
+     * given */
+    lua_pushlightuserdata(L, &graphics_defaultPalette);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    lua_insert(L, 1);
+  }
+
   if (lua_type(L, 1) == LUA_TTABLE) {
     luaL_argcheck(L, lua_rawlen(L, 1) == 768, 1,
                   "expected table with length of 768");
@@ -228,6 +237,7 @@ int l_graphics_setPalette(lua_State *L) {
       outp(0x03c9, CLAMP(g, 0, 0xff) >> 2);
       outp(0x03c9, CLAMP(b, 0, 0xff) >> 2);
     }
+
   } else {
     int idx = luaL_checkint(L, 1);
     int r = luaL_checkint(L, 2);
@@ -529,6 +539,12 @@ int luaopen_graphics(lua_State *L) {
     { 0, 0 },
   };
   luaL_newlib(L, reg);
+
+  /* Get the default palette and save to the registry */
+  lua_pushlightuserdata(L, &graphics_defaultPalette);
+  lua_pushcfunction(L, l_graphics_getPalette);
+  lua_call(L, 0, 1);
+  lua_settable(L, LUA_REGISTRYINDEX);
 
   /* Init screen canvas */
   lua_pushcfunction(L, l_image_newCanvas);
