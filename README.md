@@ -30,10 +30,12 @@ the built-in LoveDOS modules, functions and callbacks.
 
 
 ## Using images
-LoveDOS only provides support for a single image format: 8bit .pcx; all images
-should use the default VGA palette. [ASEprite](http://www.aseprite.org/) is a
-good choice of image editing software for use with LoveDOS as it uses the VGA
-palette by default and can save to the 8bit .pcx format.
+LoveDOS provides support for a single image format: 8bit .pcx; the palette
+stored in the image is ignored. LoveDOS uses the default VGA palette by
+default, but this can be changed by using the `love.graphics.setPalette()`
+function. [ASEprite](http://www.aseprite.org/) is a good choice of image
+editing software for use with LoveDOS as it uses the default VGA palette by
+default and can save to the 8bit .pcx format.
 
 
 ## Building
