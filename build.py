@@ -8,7 +8,7 @@ BIN_NAME  = "love.exe"
 
 CFLAGS    = ["-Ofast", "-Wall"]
 DLIBS     = ["m"]
-DEFINES   = ["DMT_ABORT_NULL"]
+DEFINES   = ["DMT_ABORT_NULL", "LUA_COMPAT_ALL"]
 
 
 def strformat(fmt, var):
