@@ -201,7 +201,7 @@ int l_graphics_getPalette(lua_State *L) {
     return 1;
 
   } else {
-    int idx = luaL_checkinteger(L, 1);
+    int idx = luaL_checkint(L, 1);
     if (idx < 0 || idx > 0xff) return 0;
     outp(0x03c6, 0xff);
     outp(0x03c7, idx);
