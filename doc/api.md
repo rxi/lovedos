@@ -106,11 +106,12 @@ is returned. This table can be used with `love.graphics.setPalette()`.
 Sets the palette's color at the `index` palette to the rgb color value. `r`,
 `g` and `b` should each be a value between 0 and 256.
 
-##### love.graphics.setPalette(t)
+##### love.graphics.setPalette([t])
 Sets the entire palette from the provided table `t`. The table should consist
 of 768 numerical values, one for each channel of each rgb color of the palette.
 For example, the first number in the table would correspond to the red channel
-of the color 0. Each value should be between 0 and 256.
+of the color 0. Each value should be between 0 and 256. If no `t` argument is
+supplied then the palette is reset to the default.
 
 ##### love.graphics.reset()
 Resets the font, color, background color, canvas, blend mode and flip mode to
