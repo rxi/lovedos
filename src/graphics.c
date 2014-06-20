@@ -187,20 +187,33 @@ int l_graphics_setFlip(lua_State *L) {
 
 
 int l_graphics_setPalette(lua_State *L) {
-  int idx = luaL_checkint(L, 1);
-  int r = luaL_checkint(L, 2);
-  int g = luaL_checkint(L, 3);
-  int b = luaL_checkint(L, 4);
   #define CLAMP(x, a, b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
-  idx = CLAMP(idx, 0, 0xff);
-  r = CLAMP(r, 0, 0xff) >> 2;
-  g = CLAMP(g, 0, 0xff) >> 2;
-  b = CLAMP(b, 0, 0xff) >> 2;
+  luaL_checkany(L, 1);
+  if (lua_type(L, 1) == LUA_TTABLE) {
+    luaL_argcheck(L, lua_rawlen(L, 1) == 768, 1,
+                  "expected table with length of 768");
+    outp(0x03c8, 0);
+    int i;
+    for (i = 0; i < 768; i += 3) {
+      lua_rawgeti(L, 1, i + 1); int r = lua_tointeger(L, -1); lua_pop(L, 1);
+      lua_rawgeti(L, 1, i + 2); int g = lua_tointeger(L, -1); lua_pop(L, 1);
+      lua_rawgeti(L, 1, i + 3); int b = lua_tointeger(L, -1); lua_pop(L, 1);
+      outp(0x03c9, CLAMP(r, 0, 0xff) >> 2);
+      outp(0x03c9, CLAMP(g, 0, 0xff) >> 2);
+      outp(0x03c9, CLAMP(b, 0, 0xff) >> 2);
+    }
+  } else {
+    int idx = luaL_checkint(L, 1);
+    int r = luaL_checkint(L, 2);
+    int g = luaL_checkint(L, 3);
+    int b = luaL_checkint(L, 4);
+    if (idx < 0 || idx > 0xff) return 0;
+    outp(0x03c8, idx);
+    outp(0x03c9, CLAMP(r, 0, 0xff) >> 2);
+    outp(0x03c9, CLAMP(g, 0, 0xff) >> 2);
+    outp(0x03c9, CLAMP(b, 0, 0xff) >> 2);
+  }
   #undef CLAMP
-  outp(0x03c8, idx);
-  outp(0x03c9, r);
-  outp(0x03c9, g);
-  outp(0x03c9, b);
   return 0;
 }
 
