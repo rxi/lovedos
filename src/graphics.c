@@ -186,6 +186,32 @@ int l_graphics_setFlip(lua_State *L) {
 }
 
 
+int l_graphics_getPalette(lua_State *L) {
+  if (lua_isnoneornil(L, 1)) {
+    lua_newtable(L);
+    outp(0x03c6, 0xff);
+    outp(0x03c7, 0);
+    int i;
+    for (i = 0; i < 768; i += 3) {
+      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 1);
+      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 2);
+      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 3);
+    }
+    return 1;
+  } else {
+    int idx = luaL_checkinteger(L, 1);
+    if (idx < 0 || idx > 0xff) return 0;
+    outp(0x03c6, 0xff);
+    outp(0x03c7, idx);
+    lua_pushinteger(L, inp(0x03c9) << 2);
+    lua_pushinteger(L, inp(0x03c9) << 2);
+    lua_pushinteger(L, inp(0x03c9) << 2);
+    return 3;
+  }
+  return 0;
+}
+
+
 int l_graphics_setPalette(lua_State *L) {
   #define CLAMP(x, a, b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
   luaL_checkany(L, 1);
@@ -485,6 +511,7 @@ int luaopen_graphics(lua_State *L) {
     { "setCanvas",          l_graphics_setCanvas          },
     { "getFlip",            l_graphics_getFlip            },
     { "setFlip",            l_graphics_setFlip            },
+    { "getPalette",         l_graphics_getPalette         },
     { "setPalette",         l_graphics_setPalette         },
     { "reset",              l_graphics_reset              },
     { "clear",              l_graphics_clear              },
