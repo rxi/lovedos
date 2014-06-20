@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <pc.h>
 #include "luaobj.h"
 #include "image.h"
 #include "font.h"
@@ -181,6 +182,25 @@ int l_graphics_getFlip(lua_State *L) {
 int l_graphics_setFlip(lua_State *L) {
   int x = lua_isnoneornil(L, 1) ? 0 : lua_toboolean(L, 1);
   image_setFlip(x);
+  return 0;
+}
+
+
+int l_graphics_setPalette(lua_State *L) {
+  int idx = luaL_checkint(L, 1);
+  int r = luaL_checkint(L, 2);
+  int g = luaL_checkint(L, 3);
+  int b = luaL_checkint(L, 4);
+  #define CLAMP(x, a, b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
+  idx = CLAMP(idx, 0, 0xff);
+  r = CLAMP(r, 0, 0xff) >> 2;
+  g = CLAMP(g, 0, 0xff) >> 2;
+  b = CLAMP(b, 0, 0xff) >> 2;
+  #undef CLAMP
+  outp(0x03c8, idx);
+  outp(0x03c9, r);
+  outp(0x03c9, g);
+  outp(0x03c9, b);
   return 0;
 }
 
@@ -452,6 +472,7 @@ int luaopen_graphics(lua_State *L) {
     { "setCanvas",          l_graphics_setCanvas          },
     { "getFlip",            l_graphics_getFlip            },
     { "setFlip",            l_graphics_setFlip            },
+    { "setPalette",         l_graphics_setPalette         },
     { "reset",              l_graphics_reset              },
     { "clear",              l_graphics_clear              },
     { "present",            l_graphics_present            },
