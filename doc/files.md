@@ -6,6 +6,7 @@ code.
 File              | Description
 ------------------|------------------------------------------------------------
 main.c            | The entry point, initialises everything
+vga.h             | Function prototypes for initing / deiniting vga mode 13h
 vga.c             | Functions for initing / deiniting vga mode 13h
 luaobj.h          | Helper function prototypes for lua udata objects
 luaobj.c          | Helper functions for lua udata objects
