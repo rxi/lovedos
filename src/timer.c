@@ -23,8 +23,14 @@ double  timer_avgTimer;
 
 int l_timer_step(lua_State *L) {
   /* Do delta */
-  long long now = uclock();
-  timer_lastDt = (now - timer_lastStep) / (double)UCLOCKS_PER_SEC;
+  long long now;
+  /* Sometimes a call to uclock() will return a slightly earlier time than the
+   * previous call, resulting in a negative delta time. The below loop keeps
+   * trying for a proper value if this occurs. */
+  do {
+    now = uclock();
+    timer_lastDt = (now - timer_lastStep) / (double)UCLOCKS_PER_SEC;
+  } while (timer_lastDt < 0);
   timer_lastStep = now;
   /* Do average */
   timer_avgAcc += timer_lastDt;
