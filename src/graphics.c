@@ -440,7 +440,7 @@ int l_graphics_circle(lua_State *L) {
           int sy = (starty);\
           if (sy < 0 || sy >= graphics_canvas->height) break;\
           if (sx < 0) sx = 0;\
-          if (sx >= graphics_canvas->width) sx = graphics_canvas->width - 1;\
+          if (sx > graphics_canvas->width) sx = graphics_canvas->width;\
           if (ex < 0) ex = 0;\
           if (ex > graphics_canvas->width) ex = graphics_canvas->width;\
           if (sx == ex) break;\
