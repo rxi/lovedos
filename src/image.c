@@ -57,9 +57,9 @@ const char *image_init(image_t *self, const char *filename) {
   int i;
   for (i = 0; i < width * height; i++) {
     unsigned char *p = data32 + i * 4;
-    int b = p[0];
+    int r = p[0];
     int g = p[1];
-    int r = p[2];
+    int b = p[2];
     int a = p[3];
     int idx = palette_colorIdx(r, g, b);
     if (idx < 0) {

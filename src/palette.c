@@ -44,7 +44,7 @@ int palette_colorIdx(int r, int g, int b) {
   palette_init();
 
   /* Make 18bit rgb color (6bits per-channel) from 8bit channels  */
-  unsigned color = ((r & 0xfc) << 10) | ((g & 0xfc) << 4) | ((b & 0xfc) >> 2);
+  unsigned color = ((b & 0xfc) << 10) | ((g & 0xfc) << 4) | ((r & 0xfc) >> 2);
 
   /* Hash color */
   unsigned h = hash(&color, sizeof(color));
