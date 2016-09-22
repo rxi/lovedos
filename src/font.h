@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2016 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -9,14 +9,15 @@
 #define FONT_H
 
 #include "image.h"
+#include "lib/stb/stb_truetype.h"
 
 typedef struct {
   image_t image;
-  int charSpacing, lineSpacing;
+  stbtt_bakedchar glyphs[128];
 } font_t;
 
-const char *font_init(font_t *self, const char *filename);
-const char *font_initEmbedded(font_t *self);
+const char *font_init(font_t *self, const char *filename, int ptsize);
+const char *font_initEmbedded(font_t *self, int ptsize);
 void font_deinit(font_t *self);
 void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
                const char *str, int dx, int dy);

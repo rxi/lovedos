@@ -10,33 +10,97 @@
 #include <string.h>
 
 #include "lib/dmt/dmt.h"
+#include "lib/stb/stb_truetype.h"
 #include "font.h"
 #include "luaobj.h"
 
 
-const char *font_init(font_t *self, const char *filename) {
-  memset(self, 0, sizeof(*self));
-  const char *err = image_init(&self->image, filename);
-  if (err) return err;
+static const char *initFont(font_t *self, const void *data, int ptsize) {
+  int i;
+  /* Init font's image */
+  int w = 128, h = 128;
+retry:
+  image_initBlank(&self->image, w, h);
+
+  /* Init font */
+  stbtt_fontinfo font;
+  if ( !stbtt_InitFont(&font, data, 0) ) {
+    return "could not load font";
+  }
+
+  /* Load glyphs */
+  float scale = stbtt_ScaleForMappingEmToPixels(&font, 1) /
+                stbtt_ScaleForPixelHeight(&font, 1);
+  int res = stbtt_BakeFontBitmap(
+    data, 0, ptsize * scale, self->image.data, w, h, 0, 128, self->glyphs);
+
+  /* Retry with a larger image buffer if the buffer wasn't large enough */
+  if (res < 0) {
+    w <<= 1;
+    h <<= 1;
+    image_deinit(&self->image);
+    goto retry;
+  }
+
+  /* Adjust glyph yoffsets */
+  int ascent;
+  stbtt_GetFontVMetrics(&font, &ascent, NULL, NULL);
+  ascent *= stbtt_ScaleForMappingEmToPixels(&font, ptsize);
+  for (i = 0; i < 128; i++) {
+    self->glyphs[i].yoff += ascent;
+  }
+
+  /* Init image data and mask */
+  for (i = 0; i < w * h; i++) {
+    self->image.data[i] = (self->image.data[i] > 127) ? 1 : 0;
+    self->image.mask[i] = (self->image.data[i] == 0) ? 0xff : 0;
+  }
+
+  /* Return NULL for no error */
   return NULL;
 }
 
 
-const char *font_initEmbedded(font_t *self) {
-  #include "font_embedded.c"
+const char *font_init(font_t *self, const char *filename, int ptsize) {
+  const char *errmsg = NULL;
+  void *data = NULL;
+  FILE *fp = NULL;
   memset(self, 0, sizeof(*self));
-  image_initBlank(&self->image, font_width, font_height);
-  int i, j;
-  char *p = font_data;
-  for (i = 0; i < font_width * font_height; i += 8) {
-    for (j = 0; j < 8; j++) {
-      int res = (*p >> j) & 1;
-      self->image.data[i + j] = res ? 0xf : 0x00;
-      self->image.mask[i + j] = res ? 0x0 : 0xff;
-    }
-    p++;
+
+  /* Load font file */
+  fp = fopen(filename, "rb");
+  if (!fp) {
+    errmsg = "could not open font file";
+    goto fail;
   }
+  fseek(fp, 0, SEEK_END);
+  int sz = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  data = dmt_malloc(sz);
+  fread(data, sz, 1, fp);
+  fclose(fp);
+
+  /* Init font */
+  errmsg = initFont(self, data, ptsize);
+  if (errmsg) {
+    goto fail;
+  }
+
+  /* Free font data */
+  dmt_free(data);
+
   return NULL;
+
+fail:
+  if (fp) fclose(fp);
+  dmt_free(data);
+  return errmsg;
+}
+
+
+const char *font_initEmbedded(font_t *self, int ptsize) {
+  #include "font_embedded.c"
+  return initFont(self, font_data, 8);
 }
 
 
@@ -51,11 +115,6 @@ extern int image_flip;
 void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
                const char *str, int dx, int dy
 ) {
-  int cw = self->image.width / 16;
-  int ch = self->image.height / 16;
-  int cws = (cw + self->charSpacing);
-  int chs = (ch + self->lineSpacing);
-
   const char *p = str;
   int x = dx;
   int y = dy;
@@ -66,16 +125,13 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
   image_flip = 0;
 
   while (*p) {
-    if (*p == '\n') {
-      x = dx;
-      y += chs;
-    } else {
-      if (*p != ' ') {
-        image_blit(&self->image, buf, bufw, bufh,
-                   x, y, cw * (*p % 16), ch * (*p / 16), cw, ch);
-      }
-      x += cws;
-    }
+    stbtt_bakedchar *g = &self->glyphs[(int) (*p & 127)];
+    int w = g->x1 - g->x0;
+    int h = g->y1 - g->y0;
+    image_blit(
+      &self->image, buf, bufw, bufh,
+      x + g->xoff, y + g->yoff, g->x0, g->y0, w, h);
+    x += g->xadvance;
     p++;
   }
 
@@ -91,13 +147,14 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
 
 int l_font_new(lua_State *L) {
   const char *filename = lua_isnoneornil(L, 1) ? NULL : luaL_checkstring(L, 1);
+  int ptsize = luaL_optnumber(L, 2, 12);
   font_t *self = luaobj_newudata(L, sizeof(*self));
   luaobj_setclass(L, CLASS_TYPE, CLASS_NAME);
   if (filename) {
-    const char *err = font_init(self, filename);
+    const char *err = font_init(self, filename, ptsize);
     if (err) luaL_error(L, err);
   } else {
-    font_initEmbedded(self);
+    font_initEmbedded(self, ptsize);
   }
   return 1;
 }
@@ -110,98 +167,23 @@ int l_font_gc(lua_State *L) {
 }
 
 
-int l_font_getDimensions(lua_State *L) {
-  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int charWidth = (self->image.width / 16) + self->charSpacing;
-  int charHeight = (self->image.height / 16) + self->lineSpacing;
-  int count = 0, max = 0, lines = 1;
-  const char *p = luaL_checkstring(L, 2);
-  while (*p) {
-    if (*p == '\n') {
-      max = count > max ? count : max;
-      count = 0;
-      lines++;
-    } else {
-      count++;
-    }
-    p++;
-  }
-  max = count > max ? count : max;
-  lua_pushinteger(L, max * charWidth);
-  lua_pushinteger(L, lines * charHeight);
-  return 2;
-}
-
-
 int l_font_getWidth(lua_State *L) {
-  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int charWidth = (self->image.width / 16) + self->charSpacing;
-  if (lua_isnoneornil(L, 2)) {
-    lua_pushinteger(L, charWidth);
-    return 1;
-  }
-  int count = 0, max = 0;
-  const char *p = luaL_checkstring(L, 2);
-  while (*p) {
-    if (*p == '\n') {
-      max = count > max ? count : max;
-      count = 0;
-    } else {
-      count++;
-    }
-    p++;
-  }
-  max = count > max ? count : max;
-  lua_pushinteger(L, max * charWidth);
-  return 1;
+  return 0;
 }
 
 
 int l_font_getHeight(lua_State *L) {
-  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int charHeight = (self->image.height / 16) + self->lineSpacing;
-  if (lua_isnoneornil(L, 2)) {
-    lua_pushinteger(L, charHeight);
-    return 1;
-  }
-  const char *p = luaL_checkstring(L, 2);
-  int lines = 1;
-  while (*p) {
-    if (*p == '\n') {
-      lines++;
-    }
-    p++;
-  }
-  lua_pushinteger(L, lines * charHeight);
-  return 1;
-}
-
-
-int l_font_setLineSpacing(lua_State *L) {
-  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int x = luaL_checkinteger(L, 2);
-  self->lineSpacing = x;
   return 0;
 }
 
-
-int l_font_setCharSpacing(lua_State *L) {
-  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int x = luaL_checkinteger(L, 2);
-  self->charSpacing = x;
-  return 0;
-}
 
 
 int luaopen_font(lua_State *L) {
   luaL_Reg reg[] = {
     { "new",            l_font_new            },
     { "__gc",           l_font_gc             },
-    { "getDimensions",  l_font_getDimensions  },
     { "getWidth",       l_font_getWidth       },
     { "getHeight",      l_font_getHeight      },
-    { "setLineSpacing", l_font_setLineSpacing },
-    { "setCharSpacing", l_font_setCharSpacing },
     { 0, 0 },
   };
   luaobj_newclass(L, CLASS_NAME, NULL, l_font_new, reg);
