@@ -63,7 +63,7 @@ const char *image_init(image_t *self, const char *filename) {
     int a = p[3];
     int idx = palette_colorIdx(r, g, b);
     if (idx < 0) {
-      errmsg = "color palette exhausted: use fewer colors";
+      errmsg = "color palette exhausted: use fewer unique colors";
       goto fail;
     }
     self->data[i] = (a >= 127) ? idx : 0;
