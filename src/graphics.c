@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pc.h>
-#include "luaobj.h"
+#include "palette.h"
 #include "image.h"
 #include "font.h"
 #include "quad.h"
@@ -21,10 +21,34 @@ font_t   *graphics_defaultFont;
 image_t  *graphics_canvas;
 font_t   *graphics_font;
 pixel_t   graphics_backgroundColor;
+int       graphics_backgroundColor_rgb[3];
 pixel_t   graphics_color;
+int       graphics_color_rgb[3];
 int       graphics_blendMode;
 int       graphics_flip;
 
+
+static int getColorFromArgs(lua_State *L, int *rgb, int def) {
+  int r = luaL_optinteger(L, 1, def);
+  int g = luaL_optinteger(L, 2, def);
+  int b = luaL_optinteger(L, 3, def);
+  int idx = palette_colorIdx(r, g, b);
+  if (idx < 0) {
+    luaL_error(L, "color palette exhausted: use fewer unique colors");
+  }
+  rgb[0] = r;
+  rgb[1] = g;
+  rgb[2] = b;
+  return idx;
+}
+
+
+static int pushColor(lua_State *L, int *rgb) {
+  lua_pushinteger(L, rgb[0]);
+  lua_pushinteger(L, rgb[1]);
+  lua_pushinteger(L, rgb[2]);
+  return 3;
+}
 
 
 int l_graphics_getDimensions(lua_State *L) {
@@ -47,26 +71,24 @@ int l_graphics_getHeight(lua_State *L) {
 
 
 int l_graphics_getBackgroundColor(lua_State *L) {
-  lua_pushinteger(L, graphics_backgroundColor);
-  return 1;
+  return pushColor(L, graphics_backgroundColor_rgb);
 }
 
 
 int l_graphics_setBackgroundColor(lua_State *L) {
-  graphics_backgroundColor =
-    lua_isnoneornil(L, 1) ? 0x0: luaL_checkint(L, 1);
+  int idx = getColorFromArgs(L, graphics_backgroundColor_rgb, 0);
+  graphics_backgroundColor = idx;
   return 0;
 }
 
 
 int l_graphics_getColor(lua_State *L) {
-  lua_pushinteger(L, graphics_backgroundColor);
-  return 1;
+  return pushColor(L, graphics_color_rgb);
 }
 
 
 int l_graphics_setColor(lua_State *L) {
-  graphics_color = lua_isnoneornil(L, 1) ? 0xf : luaL_checkint(L, 1);
+  graphics_color = getColorFromArgs(L, graphics_color_rgb, 1);
   image_setColor(graphics_color);
   return 0;
 }
