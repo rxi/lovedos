@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -16,6 +16,7 @@
 #include "luaobj.h"
 #include "keyboard.h"
 #include "image.h"
+#include "palette.h"
 
 
 static lua_State *L;
@@ -43,6 +44,7 @@ int main(void) {
   /* Init everything */
   atexit(deinit);
   vga_init();
+  palette_init();
   keyboard_init();
 
   /* Init lua */
@@ -99,4 +101,4 @@ int main(void) {
   }
 
   return 0;
-} 
+}
