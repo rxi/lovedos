@@ -6,7 +6,7 @@ SRC_DIR   = "src"
 BIN_DIR   = "bin"
 BIN_NAME  = "love.exe"
 
-CFLAGS    = ["-Ofast", "-Wall"]
+CFLAGS    = ["-O3", "-Wall", "-s", "-Wno-misleading-indentation"]
 DLIBS     = ["m"]
 DEFINES   = ["DMT_ABORT_NULL", "LUA_COMPAT_ALL"]
 
@@ -44,7 +44,7 @@ def main():
   print "compiling..."
   res = os.system(cmd)
 
-  print("done" + (" with errors" if res else ""))
+  print "done" + (" with errors" if res else "")
 
 
 
