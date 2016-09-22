@@ -29,14 +29,6 @@ The [doc/api.md](doc/api.md) file provides a reference and overview of all of
 the built-in LoveDOS modules, functions and callbacks.
 
 
-## Using images
-LoveDOS provides support for a single image format: 8bit .pcx. By default the
-standard VGA palette is used, although this can be changed by using the
-`love.graphics.setPalette()` function. [ASEprite](http://www.aseprite.org/) is
-a good choice of image editing software for use with LoveDOS as it uses the
-standard VGA palette by default and can save to the 8bit .pcx format.
-
-
 ## Building
 Instructions for building the project from source can be found in the
 [doc/building.md](doc/building.md) file. If you intend to make changes to the

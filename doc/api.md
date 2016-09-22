@@ -96,23 +96,6 @@ Returns true if images are set to be horizontally flipped when drawn
 Set whether images should be horizontally flipped when draw. If `enable` is not
 passed then this is set to false by default.
 
-##### love.graphics.getPalette([index])
-Returns 3 numerical values between 0 and 256 representing the rgb color at the
-given palette `index`. If no `index` is given then a table with a length of 768
-consisting of the value of each channel for each color of the current palette
-is returned. This table can be used with `love.graphics.setPalette()`.
-
-##### love.graphics.setPalette(index, r, g, b)
-Sets the palette's color at the `index` palette to the rgb color value. `r`,
-`g` and `b` should each be a value between 0 and 256.
-
-##### love.graphics.setPalette([t])
-Sets the entire palette from the provided table `t`. The table should consist
-of 768 numerical values, one for each channel of each rgb color of the palette.
-For example, the first number in the table would correspond to the red channel
-of the color 0. Each value should be between 0 and 256. If no `t` argument is
-supplied then the palette is reset to the default.
-
 ##### love.graphics.reset()
 Resets the font, color, background color, canvas, blend mode and flip mode to
 their defaults.
@@ -144,11 +127,10 @@ Draws a circle of a given `radius` with its center at the `x`, `y` position.
 Draws the `text` string in the current font with its top left at the `x`, `y`
 position.
 
-##### love.graphics.newImage(filename [, key])
-Creates and returns a new image. `filename` should be the name of an 8bit .pcx
-image file which uses the default VGA palette. The `key` value is the color in
-the image which is used to represent the transparent pixels; if no `key` is
-provided then the color 0 is used.
+##### love.graphics.newImage(filename)
+Creates and returns a new image. `filename` should be the name of an image file.
+LoveDOS is limited to a palette of 255 unique colors in any given game; it is up
+to the user not to exceed this limit.
 
 ##### love.graphics.newCanvas([width, height])
 Creates and returns a new blank image of the size `width`, `height`. If a
@@ -288,4 +270,3 @@ Called when an unprotected error occurs in any of the callback functions; `err`
 is the error message. Setting this function overrides the default error
 behaviour of resetting the VGA mode, printing the error and exiting the
 program.
-
