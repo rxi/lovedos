@@ -48,17 +48,15 @@ Returns the height of the screen in pixels.
 ##### love.graphics.getBackgroundColor()
 Returns the currently set background color.
 
-##### love.graphics.setBackgroundColor([color])
+##### love.graphics.setBackgroundColor([red [, green [, blue]]])
 Sets the the background color used when `love.graphics.clear()` is called
-without any arguments. If no `color` argument is passed to the function then
-the background color is reset to the default.
+without any arguments.
 
 ##### love.graphics.getColor()
 Returns the currently set color.
 
-##### love.graphics.setColor([color])
-Sets the the color used when drawing. If no `color` argument is passed to the
-function then the color is reset to the default.
+##### love.graphics.setColor([red [, green [, blue]]])
+Sets the the color used when drawing.
 
 ##### love.graphics.getBlendMode()
 Returns the currently set blend mode.
