@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -10,7 +10,9 @@
 #include <string.h>
 
 #include "lib/dmt/dmt.h"
+#include "lib/stb/stb_image.h"
 #include "image.h"
+#include "palette.h"
 #include "luaobj.h"
 
 int image_blendMode = IMAGE_NORMAL;
@@ -32,65 +34,56 @@ void image_setFlip(int mode) {
 
 
 
-const char *image_init(image_t *self, const char *filename, int key) {
-  /* Loads a PCX from the provided filename into the image struct and inits the
-   * struct and mask */
-  int i, sz;
-  int rle = 0;
-  FILE *fp;
+const char *image_init(image_t *self, const char *filename) {
+  /* Loads an image file into the struct and inits the mask */
+  const char *errmsg = NULL;
   memset(self, 0, sizeof(*self));
 
-  /* Open, read header and error check */
-  fp = fopen(filename, "rb");
-  if (!fp) return "could not open image file";
-  if (getc(fp) != 10) { fclose(fp); return "invalid pcx file"; }
-  fseek(fp, 2, SEEK_SET);
-  if (getc(fp)) rle = 1;
-  if (getc(fp) != 8) { fclose(fp); return "image file is not 8bit"; }
+  /* Load 32bit image data */
+  int width, height, n;
+  unsigned char *data32 = stbi_load(filename, &width, &height, &n, 4);
+  if (!data32) {
+    errmsg = "could not load image file";
+    goto fail;
+  }
 
-  /* Get dimensions and allocate space */
-  fseek(fp, 8, SEEK_SET);
-  fread(&self->width, 2, 1, fp);
-  fread(&self->height, 2, 1, fp);
-  self->width += 1;
-  self->height += 1;
-  sz = self->width * self->height;
+  /* Set dimensions and allocate memory */
+  int sz = width * height;
+  self->width = width;
+  self->height = height;
   self->data = dmt_malloc(sz);
 
-  /* Load image data */
-  fseek(fp, 128, SEEK_SET);
-  /* Load compressed (RLE) data */
-  if (rle) {
-    unsigned int c;
-    i = 0;
-    while (i < sz) {
-      c = fgetc(fp);
-      if ((c & 0xc0) == 0xc0) {
-        c &= ~0xc0;
-        memset(self->data + i, fgetc(fp), c);
-        i += c;
-      } else {
-        self->data[i++] = c;
-      }
+  /* Load pixels into struct, converting 32bit to 8bit paletted */
+  int i;
+  for (i = 0; i < width * height; i++) {
+    unsigned char *p = data32 + i * 4;
+    int b = p[0];
+    int g = p[1];
+    int r = p[2];
+    int a = p[3];
+    int idx = palette_colorIdx(r, g, b);
+    if (idx < 0) {
+      errmsg = "color palette exhausted: use fewer colors";
+      goto fail;
     }
-  /* Load uncompressed data */
-  } else {
-    fread(self->data, sz, 1, fp);
+    self->data[i] = (a >= 127) ? idx : 0;
   }
-  fclose(fp);
 
   /* Init mask */
   self->mask = dmt_malloc(sz);
   for (i = 0; i < sz; i++) {
-    if (self->data[i] == key) {
-      self->data[i] = 0x00;
-      self->mask[i] = 0xFF;
-    } else {
-      self->mask[i] = 0x0;
-    }
+    self->mask[i] = (self->data[i] == 0) ? 0xFF : 0x00;
   }
 
+  /* Free 32bit pixel data, return NULL for no error */
+  free(data32);
+  data32 = NULL;
+
   return NULL;
+
+fail:
+  free(data32);
+  return errmsg;
 }
 
 
@@ -178,7 +171,7 @@ void image_blit(image_t *self, pixel_t *buf, int bufw, int bufh,
 
   #define BLIT_NORMAL(dst, src, msk)\
     (dst) &= (msk);\
-    (dst) |= (src); 
+    (dst) |= (src);
 
   #define BLIT_AND(dst, src, msk)\
     (dst) &= (src);
@@ -207,7 +200,7 @@ void image_blit(image_t *self, pixel_t *buf, int bufw, int bufh,
       for (y = 0; y < sh; y++) {
         memcpy(buf + dsti, self->data + srci, sw);
         srci += self->width;
-        dsti += bufw; 
+        dsti += bufw;
       }
     } else {
       BLIT(BLIT_LOOP_NORMAL);
@@ -232,10 +225,9 @@ void image_deinit(image_t *self) {
 
 int l_image_new(lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
-  const int key = lua_gettop(L) > 1 ? luaL_checkint(L, 2): 0x0;
   image_t *self = luaobj_newudata(L, sizeof(*self));
   luaobj_setclass(L, CLASS_TYPE, CLASS_NAME);
-  const char *err = image_init(self, filename, key);
+  const char *err = image_init(self, filename);
   if (err) luaL_error(L, err);
   return 1;
 }
@@ -343,4 +335,3 @@ int luaopen_image(lua_State *L) {
   luaobj_newclass(L, CLASS_NAME, NULL, l_image_new, reg);
   return 1;
 }
-

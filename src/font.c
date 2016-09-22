@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -16,7 +16,7 @@
 
 const char *font_init(font_t *self, const char *filename) {
   memset(self, 0, sizeof(*self));
-  const char *err = image_init(&self->image, filename, 0x0);
+  const char *err = image_init(&self->image, filename);
   if (err) return err;
   return NULL;
 }
@@ -70,7 +70,7 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
       x = dx;
       y += chs;
     } else {
-      if (*p != ' ') { 
+      if (*p != ' ') {
         image_blit(&self->image, buf, bufw, bufh,
                    x, y, cw * (*p % 16), ch * (*p / 16), cw, ch);
       }
@@ -207,4 +207,3 @@ int luaopen_font(lua_State *L) {
   luaobj_newclass(L, CLASS_NAME, NULL, l_font_new, reg);
   return 1;
 }
-

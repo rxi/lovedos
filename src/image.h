@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -38,11 +38,10 @@ void image_setColor(pixel_t color);
 void image_setBlendMode(int mode);
 void image_setFlip(int mode);
 
-const char *image_init(image_t *self, const char *filename, int key);
+const char *image_init(image_t *self, const char *filename);
 void image_initBlank(image_t*, int, int);
 void image_blit(image_t *self, pixel_t *buf, int bufw, int bufh,
                 int dx, int dy, int sx, int sy, int sw, int sh);
 void image_deinit(image_t*);
 
 #endif
-
