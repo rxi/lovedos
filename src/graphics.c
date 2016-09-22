@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -17,7 +17,6 @@
 
 image_t  *graphics_screen;
 font_t   *graphics_defaultFont;
-int       graphics_defaultPalette;
 
 image_t  *graphics_canvas;
 font_t   *graphics_font;
@@ -157,7 +156,7 @@ int l_graphics_setCanvas(lua_State *L) {
     lua_pushlightuserdata(L, &graphics_screen);
     lua_gettable(L, LUA_REGISTRYINDEX);
     lua_insert(L, 1);
-  } 
+  }
   graphics_canvas = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
   /* Remove old canvas from registry. This is done after we know the args are
    * okay so that the canvas remains unchanged if an error occurs */
@@ -183,73 +182,6 @@ int l_graphics_getFlip(lua_State *L) {
 int l_graphics_setFlip(lua_State *L) {
   int x = lua_isnoneornil(L, 1) ? 0 : lua_toboolean(L, 1);
   image_setFlip(x);
-  return 0;
-}
-
-
-int l_graphics_getPalette(lua_State *L) {
-  if (lua_isnoneornil(L, 1)) {
-    lua_newtable(L);
-    outp(0x03c6, 0xff);
-    outp(0x03c7, 0);
-    int i;
-    for (i = 0; i < 768; i += 3) {
-      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 1);
-      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 2);
-      lua_pushinteger(L, inp(0x03c9) << 2); lua_rawseti(L, -2, i + 3);
-    }
-    return 1;
-
-  } else {
-    int idx = luaL_checkint(L, 1);
-    if (idx < 0 || idx > 0xff) return 0;
-    outp(0x03c6, 0xff);
-    outp(0x03c7, idx);
-    lua_pushinteger(L, inp(0x03c9) << 2);
-    lua_pushinteger(L, inp(0x03c9) << 2);
-    lua_pushinteger(L, inp(0x03c9) << 2);
-    return 3;
-  }
-  return 0;
-}
-
-
-int l_graphics_setPalette(lua_State *L) {
-  #define CLAMP(x, a, b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
-  if (lua_isnoneornil(L, 1)) {
-    /* Set the first argument to the default palette if no arguments were
-     * given */
-    lua_pushlightuserdata(L, &graphics_defaultPalette);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-    lua_insert(L, 1);
-  }
-
-  if (lua_type(L, 1) == LUA_TTABLE) {
-    luaL_argcheck(L, lua_rawlen(L, 1) == 768, 1,
-                  "expected table with length of 768");
-    outp(0x03c8, 0);
-    int i;
-    for (i = 0; i < 768; i += 3) {
-      lua_rawgeti(L, 1, i + 1); int r = lua_tointeger(L, -1); lua_pop(L, 1);
-      lua_rawgeti(L, 1, i + 2); int g = lua_tointeger(L, -1); lua_pop(L, 1);
-      lua_rawgeti(L, 1, i + 3); int b = lua_tointeger(L, -1); lua_pop(L, 1);
-      outp(0x03c9, CLAMP(r, 0, 0xff) >> 2);
-      outp(0x03c9, CLAMP(g, 0, 0xff) >> 2);
-      outp(0x03c9, CLAMP(b, 0, 0xff) >> 2);
-    }
-
-  } else {
-    int idx = luaL_checkint(L, 1);
-    int r = luaL_checkint(L, 2);
-    int g = luaL_checkint(L, 3);
-    int b = luaL_checkint(L, 4);
-    if (idx < 0 || idx > 0xff) return 0;
-    outp(0x03c8, idx);
-    outp(0x03c9, CLAMP(r, 0, 0xff) >> 2);
-    outp(0x03c9, CLAMP(g, 0, 0xff) >> 2);
-    outp(0x03c9, CLAMP(b, 0, 0xff) >> 2);
-  }
-  #undef CLAMP
   return 0;
 }
 
@@ -521,8 +453,6 @@ int luaopen_graphics(lua_State *L) {
     { "setCanvas",          l_graphics_setCanvas          },
     { "getFlip",            l_graphics_getFlip            },
     { "setFlip",            l_graphics_setFlip            },
-    { "getPalette",         l_graphics_getPalette         },
-    { "setPalette",         l_graphics_setPalette         },
     { "reset",              l_graphics_reset              },
     { "clear",              l_graphics_clear              },
     { "present",            l_graphics_present            },
@@ -539,12 +469,6 @@ int luaopen_graphics(lua_State *L) {
     { 0, 0 },
   };
   luaL_newlib(L, reg);
-
-  /* Get the default palette and save to the registry */
-  lua_pushlightuserdata(L, &graphics_defaultPalette);
-  lua_pushcfunction(L, l_graphics_getPalette);
-  lua_call(L, 0, 1);
-  lua_settable(L, LUA_REGISTRYINDEX);
 
   /* Init screen canvas */
   lua_pushcfunction(L, l_image_newCanvas);
