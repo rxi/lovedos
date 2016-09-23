@@ -258,11 +258,11 @@ int l_graphics_draw(lua_State *L) {
   int x, y;
   if (!lua_isnone(L, 2) && lua_type(L, 2) != LUA_TNUMBER) {
     quad = luaobj_checkudata(L, 2, LUAOBJ_TYPE_QUAD);
-    x = luaL_checkint(L, 3);
-    y = luaL_checkint(L, 4);
+    x = luaL_optint(L, 3, 0);
+    y = luaL_optint(L, 4, 0);
   } else {
-    x = luaL_checkint(L, 2);
-    y = luaL_checkint(L, 3);
+    x = luaL_optint(L, 2, 0);
+    y = luaL_optint(L, 3, 0);
   }
   pixel_t *buf = graphics_canvas->data;
   int bufw = graphics_canvas->width;
