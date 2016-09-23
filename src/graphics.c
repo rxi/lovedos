@@ -239,10 +239,9 @@ int l_graphics_reset(lua_State *L) {
 
 
 int l_graphics_clear(lua_State *L) {
-  int color = lua_isnoneornil(L, 1) ? graphics_backgroundColor
-                                    : luaL_checkint(L, 1);
-  memset(graphics_canvas->data, color,
-         graphics_canvas->width * graphics_canvas->height);
+  int idx = getColorFromArgs(L, NULL, graphics_backgroundColor_rgb);
+  int sz = graphics_canvas->width * graphics_canvas->height;
+  memset(graphics_canvas->data, idx, sz);
   return 0;
 }
 
