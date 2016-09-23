@@ -131,13 +131,17 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
   image_flip = 0;
 
   while (*p) {
-    stbtt_bakedchar *g = &self->glyphs[(int) (*p & 127)];
-    int w = g->x1 - g->x0;
-    int h = g->y1 - g->y0;
-    image_blit(
-      &self->image, buf, bufw, bufh,
-      x + g->xoff, y + g->yoff, g->x0, g->y0, w, h);
-    x += g->xadvance;
+    if (*p == '\n') {
+      x = dx;
+      y += self->height;
+    } else {
+      stbtt_bakedchar *g = &self->glyphs[(int) (*p & 127)];
+      int w = g->x1 - g->x0;
+      int h = g->y1 - g->y0;
+      image_blit(&self->image, buf, bufw, bufh,
+                 x + g->xoff, y + g->yoff, g->x0, g->y0, w, h);
+      x += g->xadvance;
+    }
     p++;
   }
 
