@@ -17,10 +17,6 @@
 
 static const char *initFont(font_t *self, const void *data, int ptsize) {
   int i;
-  /* Init font's image */
-  int w = 128, h = 128;
-retry:
-  image_initBlank(&self->image, w, h);
 
   /* Init font */
   stbtt_fontinfo font;
@@ -28,11 +24,22 @@ retry:
     return "could not load font";
   }
 
+  /* Get height and scale */
+  int ascent, descent, lineGap;
+  stbtt_GetFontVMetrics(&font, &ascent, &descent, &lineGap);
+  float scale = stbtt_ScaleForMappingEmToPixels(&font, ptsize);
+  self->height = (ascent - descent + lineGap) * scale;
+
+  /* Init image */
+  int w = 128, h = 128;
+retry:
+  image_initBlank(&self->image, w, h);
+
   /* Load glyphs */
-  float scale = stbtt_ScaleForMappingEmToPixels(&font, 1) /
-                stbtt_ScaleForPixelHeight(&font, 1);
+  float s = stbtt_ScaleForMappingEmToPixels(&font, 1) /
+            stbtt_ScaleForPixelHeight(&font, 1);
   int res = stbtt_BakeFontBitmap(
-    data, 0, ptsize * scale, self->image.data, w, h, 0, 128, self->glyphs);
+    data, 0, ptsize * s, self->image.data, w, h, 0, 128, self->glyphs);
 
   /* Retry with a larger image buffer if the buffer wasn't large enough */
   if (res < 0) {
@@ -43,11 +50,9 @@ retry:
   }
 
   /* Adjust glyph yoffsets */
-  int ascent;
-  stbtt_GetFontVMetrics(&font, &ascent, NULL, NULL);
-  ascent *= stbtt_ScaleForMappingEmToPixels(&font, ptsize);
+  int scaledAscent = ascent * scale;
   for (i = 0; i < 128; i++) {
-    self->glyphs[i].yoff += ascent;
+    self->glyphs[i].yoff += scaledAscent;
   }
 
   /* Init image data and mask */
@@ -79,6 +84,7 @@ const char *font_init(font_t *self, const char *filename, int ptsize) {
   data = dmt_malloc(sz);
   fread(data, sz, 1, fp);
   fclose(fp);
+  fp = NULL;
 
   /* Init font */
   errmsg = initFont(self, data, ptsize);
@@ -168,12 +174,21 @@ int l_font_gc(lua_State *L) {
 
 
 int l_font_getWidth(lua_State *L) {
-  return 0;
+  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
+  const char *p = luaL_checkstring(L, 2);
+  int width = 0;
+  while (*p) {
+    width += self->glyphs[(int) (*p++ & 127)].xadvance;
+  }
+  lua_pushinteger(L, width);
+  return 1;
 }
 
 
 int l_font_getHeight(lua_State *L) {
-  return 0;
+  font_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
+  lua_pushinteger(L, self->height);
+  return 1;
 }
 
 

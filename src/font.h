@@ -14,6 +14,7 @@
 typedef struct {
   image_t image;
   stbtt_bakedchar glyphs[128];
+  int height;
 } font_t;
 
 const char *font_init(font_t *self, const char *filename, int ptsize);
