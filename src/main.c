@@ -53,51 +53,67 @@ int main(void) {
   luaL_openlibs(L);
   luaL_requiref(L, "love", luaopen_love, 1);
 
-  int res = luaL_dostring(L,
-    "package.path = package.path .. ';' .."
-                   "package.path:gsub('%?', 'lua/?')\n"
+  const char boot[] =
+    "package.path = package.path .. ';' .. package.path:gsub('%?', 'lua/?')\n"
     "local print = print\n"
     "local xpcall = xpcall\n"
-    "require 'main'\n"
-    "if not love.run then\n"
-      "function love.run()\n"
-        "if love.load then love.load() end\n"
-        "love.timer.step()\n"
-        "while true do\n"
-          /* Keyboard Events*/
-          "for _, e in pairs(love.keyboard.getEvents()) do\n"
-            "if e.type == 'down' then\n"
-              "if love.keypressed then love.keypressed(e.code) end\n"
-            "else\n"
-              "if love.keyreleased then love.keyreleased(e.code) end\n"
-            "end\n"
-          "end\n"
-          /* Update */
-          "love.timer.step()\n"
-          "local dt = love.timer.getDelta()\n"
-          "if love.update then love.update(dt) end\n"
-          /* Draw */
-          "love.graphics.clear()\n"
-          "if love.draw then love.draw() end\n"
-          "love.graphics.present()\n"
-        "end\n"
-      "end\n"
-    "end\n"
-    "if not love.errhand then\n"
-      "function love.errhand(msg)\n"
-        "love.system.deinitVGA()\n"
-        "print('error:')\n"
-        "print(msg)\n"
-        "print(debug.traceback('', 2))\n"
-      "end\n"
-    "end\n"
-    "xpcall(love.run, love.errhand)\n"
-    );
 
-  if (res) {
+    "function love.run()\n"
+      "if love.load then love.load() end\n"
+      "love.timer.step()\n"
+      "while true do\n"
+        /* Keyboard Events*/
+        "for _, e in ipairs(love.keyboard.getEvents()) do\n"
+          "if e.type == 'down' then\n"
+            "if love.keypressed then love.keypressed(e.code) end\n"
+          "else\n"
+            "if love.keyreleased then love.keyreleased(e.code) end\n"
+          "end\n"
+        "end\n"
+        /* Update */
+        "love.timer.step()\n"
+        "local dt = love.timer.getDelta()\n"
+        "if love.update then love.update(dt) end\n"
+        /* Draw */
+        "love.graphics.clear()\n"
+        "if love.draw then love.draw() end\n"
+        "love.graphics.present()\n"
+      "end\n"
+    "end\n"
+
+    "function love.errhand(msg)\n"
+      /* Init error text */
+      "local err = { 'Error\\n', msg }\n"
+      "local trace = debug.traceback('', 2)\n"
+      "for line in string.gmatch(trace, '([^\\t]-)\\n') do\n"
+        "table.insert(err, line)\n"
+      "end\n"
+      "local str = table.concat(err, '\\n')"
+      /* Init error state */
+      "love.graphics.reset()\n"
+      "pcall(love.graphics.setBackgroundColor, 89, 157, 220)\n"
+      /* Do error loop */
+      "while true do\n"
+        "for _, e in ipairs(love.keyboard.getEvents()) do\n"
+          "if e.type == 'down' and e.code == 1 then\n"
+            "os.exit()\n"
+          "end\n"
+        "end\n"
+        "love.graphics.clear()\n"
+        "love.graphics.print(str, 6, 6)\n"
+        "love.graphics.present()\n"
+      "end\n"
+    "end\n"
+
+    "xpcall(function() require('main') end, love.errhand)\n"
+    "xpcall(love.run, love.errhand)\n";
+
+  int err = luaL_loadbuffer(L, boot, sizeof(boot) - 1, "=boot");
+
+  if (err || lua_pcall(L, 0, 0, 0)) {
     vga_deinit();
     const char *err = lua_tostring(L, -1);
-    printf("error:\n%s\n", err);
+    printf("Error\n%s\n", err);
   }
 
   return 0;
