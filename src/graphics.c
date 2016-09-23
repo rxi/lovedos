@@ -28,17 +28,26 @@ int       graphics_blendMode;
 int       graphics_flip;
 
 
-static int getColorFromArgs(lua_State *L, int *rgb, int def) {
-  int r = luaL_optinteger(L, 1, def);
-  int g = luaL_optinteger(L, 2, def);
-  int b = luaL_optinteger(L, 3, def);
+static int getColorFromArgs(lua_State *L, int *rgb, const int *def) {
+  int r, g, b;
+  if ( lua_isnoneornil(L, 1) ) {
+    r = def[0];
+    g = def[1];
+    b = def[2];
+  } else {
+    r = luaL_checkint(L, 1);
+    g = luaL_checkint(L, 2);
+    b = luaL_checkint(L, 3);
+  }
   int idx = palette_colorIdx(r, g, b);
   if (idx < 0) {
     luaL_error(L, "color palette exhausted: use fewer unique colors");
   }
-  rgb[0] = r;
-  rgb[1] = g;
-  rgb[2] = b;
+  if (rgb) {
+    rgb[0] = r;
+    rgb[1] = g;
+    rgb[2] = b;
+  }
   return idx;
 }
 
@@ -76,7 +85,8 @@ int l_graphics_getBackgroundColor(lua_State *L) {
 
 
 int l_graphics_setBackgroundColor(lua_State *L) {
-  int idx = getColorFromArgs(L, graphics_backgroundColor_rgb, 0);
+  static const int def[] = { 0, 0, 0 };
+  int idx = getColorFromArgs(L, graphics_backgroundColor_rgb, def);
   graphics_backgroundColor = idx;
   return 0;
 }
@@ -88,7 +98,8 @@ int l_graphics_getColor(lua_State *L) {
 
 
 int l_graphics_setColor(lua_State *L) {
-  graphics_color = getColorFromArgs(L, graphics_color_rgb, 1);
+  static const int def[] = { 0xff, 0xff, 0xff };
+  graphics_color = getColorFromArgs(L, graphics_color_rgb, def);
   image_setColor(graphics_color);
   return 0;
 }
