@@ -250,6 +250,18 @@ pressed key.
 Called when the user releases a key. `code` is the scancode value for the
 released key.
 
+##### love.mousemoved(x, y, dx, dy)
+Called when the user moves the mouse. `x` and `y` are the mouse's current
+position, `dx` and `dy` is the amount moved relative to the last mouse position.
+
+##### love.mousepressed(x, y, button)
+Called when the user presses a mouse button. `x` and `y` are the mouse's current
+position. `button` is the value `1` (left), `2` (right) or `3` (middle).
+
+##### love.mousereleased(x, y, button)
+Called when the user releases a mouse button. `x` and `y` are the mouse's
+current position. `button` is the value `1` (left), `2` (right) or `3` (middle).
+
 ##### love.errhand(err)
 Called when an unprotected error occurs in any of the callback functions; `err`
 is the error message. Setting this function overrides the default error
