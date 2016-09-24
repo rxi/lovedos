@@ -65,8 +65,7 @@ int main(void) {
       "love.timer.step()\n"
       "while true do\n"
         /* Update mouse and handle mouse events */
-        "love.mouse.update()\n"
-        "for _, e in ipairs(love.mouse.getEvents()) do\n"
+        "for _, e in ipairs(love.mouse.poll()) do\n"
           "if e.type == 'motion' then\n"
             "if love.mousemoved then love.mousemoved(e.x, e.y, e.dx, e.dy) end\n"
           "elseif e.type == 'pressed' then\n"
@@ -76,7 +75,7 @@ int main(void) {
           "end\n"
         "end\n"
         /* Keyboard Events */
-        "for _, e in ipairs(love.keyboard.getEvents()) do\n"
+        "for _, e in ipairs(love.keyboard.poll()) do\n"
           "if e.type == 'down' then\n"
             "if love.keypressed then love.keypressed(e.code) end\n"
           "else\n"

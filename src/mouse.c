@@ -110,13 +110,9 @@ int l_mouse_isDown(lua_State *L) {
 }
 
 
-int l_mouse_update(lua_State *L) {
+int l_mouse_poll(lua_State *L) {
   mouse_update();
-  return 0;
-}
 
-
-int l_mouse_getEvents(lua_State *L) {
   int i;
   int n = 1;
   lua_newtable(L);
@@ -159,8 +155,7 @@ int l_mouse_getEvents(lua_State *L) {
 
 int luaopen_mouse(lua_State *L) {
   luaL_Reg reg[] = {
-    { "update",       l_mouse_update        },
-    { "getEvents",    l_mouse_getEvents     },
+    { "poll",         l_mouse_poll          },
     { "getPosition",  l_mouse_getPosition   },
     { "getX",         l_mouse_getX          },
     { "getY",         l_mouse_getY          },

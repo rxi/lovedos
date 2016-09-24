@@ -100,7 +100,7 @@ int l_keyboard_isDown(lua_State *L) {
 }
 
 
-int l_keyboard_getEvents(lua_State *L) {
+int l_keyboard_poll(lua_State *L) {
   lua_newtable(L);
   int idx = 1;
   while (keyboard_events.readi != keyboard_events.writei) {
@@ -120,7 +120,7 @@ int l_keyboard_getEvents(lua_State *L) {
 
 int luaopen_keyboard(lua_State *L) {
   luaL_Reg reg[] = {
-    { "getEvents",  l_keyboard_getEvents  },
+    { "poll",       l_keyboard_poll       },
     { "isDown",     l_keyboard_isDown     },
     { 0, 0 },
   };
