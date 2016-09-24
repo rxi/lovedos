@@ -117,7 +117,43 @@ int l_mouse_update(lua_State *L) {
 
 
 int l_mouse_getEvents(lua_State *L) {
-  return 0;
+  int i;
+  int n = 1;
+  lua_newtable(L);
+
+  /* Add motion event if mouse moved */
+  if ( mouse_x != mouse_lastX || mouse_y != mouse_lastY ) {
+    lua_newtable(L);
+    lua_pushstring(L, "motion");
+    lua_setfield(L, -2, "type");
+    lua_pushinteger(L, mouse_x);
+    lua_setfield(L, -2, "x");
+    lua_pushinteger(L, mouse_y);
+    lua_setfield(L, -2, "y");
+    lua_pushinteger(L, mouse_x - mouse_lastX);
+    lua_setfield(L, -2, "dx");
+    lua_pushinteger(L, mouse_y - mouse_lastY);
+    lua_setfield(L, -2, "dy");
+    lua_rawseti(L, -2, n++);
+  }
+
+  /* Add `pressed` and `released` events */
+  for (i = 0; i < MOUSE_BUTTON_MAX; i++) {
+    if ( mouse_buttonsPressed[i] || mouse_buttonsReleased[i] ) {
+      lua_newtable(L);
+      lua_pushstring(L, mouse_buttonsPressed[i] ? "pressed" : "released");
+      lua_setfield(L, -2, "type");
+      lua_pushinteger(L, i + 1);
+      lua_setfield(L, -2, "button");
+      lua_pushinteger(L, mouse_x);
+      lua_setfield(L, -2, "x");
+      lua_pushinteger(L, mouse_y);
+      lua_setfield(L, -2, "y");
+      lua_rawseti(L, -2, n++);
+    }
+  }
+
+  return 1;
 }
 
 

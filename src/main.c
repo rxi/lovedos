@@ -66,7 +66,16 @@ int main(void) {
       "while true do\n"
         /* Update mouse and handle mouse events */
         "love.mouse.update()\n"
-        /* Keyboard Events*/
+        "for _, e in ipairs(love.mouse.getEvents()) do\n"
+          "if e.type == 'motion' then\n"
+            "if love.mousemoved then love.mousemoved(e.x, e.y, e.dx, e.dy) end\n"
+          "elseif e.type == 'pressed' then\n"
+            "if love.mousepressed then love.mousepressed(e.x, e.y, e.button) end\n"
+          "elseif e.type == 'released' then\n"
+            "if love.mousereleased then love.mousereleased(e.x, e.y, e.button) end\n"
+          "end\n"
+        "end\n"
+        /* Keyboard Events */
         "for _, e in ipairs(love.keyboard.getEvents()) do\n"
           "if e.type == 'down' then\n"
             "if love.keypressed then love.keypressed(e.code) end\n"
