@@ -106,7 +106,7 @@ int main(void) {
       "pcall(love.graphics.setBackgroundColor, 89, 157, 220)\n"
       /* Do error main loop */
       "while true do\n"
-        "for _, e in ipairs(love.keyboard.getEvents()) do\n"
+        "for _, e in ipairs(love.keyboard.poll()) do\n"
           "if e.type == 'down' and e.code == 1 then\n"
             "os.exit()\n"
           "end\n"
