@@ -5,8 +5,10 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <pc.h>
+#include <conio.h>
 #include <dpmi.h>
 #include "luaobj.h"
 #include "keyboard.h"
@@ -68,22 +70,13 @@ int keyboard_init(void) {
                        (unsigned long)keyboard_handler);
   _go32_dpmi_get_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
   new_keyb_handler_seginfo.pm_offset = (int)keyboard_handler;
-  if (_go32_dpmi_allocate_iret_wrapper(&new_keyb_handler_seginfo) != 0) {
-    return 1;
-  }
-  if (_go32_dpmi_set_protected_mode_interrupt_vector(
-        9, &new_keyb_handler_seginfo) != 0
-  ) {
-    _go32_dpmi_free_iret_wrapper(&new_keyb_handler_seginfo);
-    return 1;
-  }
+  _go32_dpmi_chain_protected_mode_interrupt_vector(9, &new_keyb_handler_seginfo);
   return 0;
 }
 
 
 void keyboard_deinit(void) {
   _go32_dpmi_set_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
-  _go32_dpmi_free_iret_wrapper(&new_keyb_handler_seginfo);
 }
 
 
@@ -235,6 +228,7 @@ int l_keyboard_poll(lua_State *L) {
   lua_newtable(L);
   int idx = 1;
 
+  /* Handle key presses / releases */
   while (keyboard_events.readi != keyboard_events.writei) {
     lua_newtable(L);
 
@@ -249,10 +243,30 @@ int l_keyboard_poll(lua_State *L) {
     lua_pushstring(L, scancodeMap[code]);
     lua_setfield(L, -2, "key");
 
-    lua_rawseti(L, -2, idx);
+    lua_rawseti(L, -2, idx++);
     keyboard_events.readi++;
-    idx++;
   }
+
+  /* Handle text input */
+  char buf[64];
+  int i = 0;
+  while ( kbhit() ) {
+    int chr = getch();
+    if (chr == 0) { /* Discard "special" keys */
+      getch();
+    } else if (chr >= 32) {
+      buf[i++] = chr;
+    }
+  }
+  if (i > 0) {
+    lua_newtable(L);
+    lua_pushstring(L, "text");
+    lua_setfield(L, -2, "type");
+    lua_pushlstring(L, buf, i);
+    lua_setfield(L, -2, "text");
+    lua_rawseti(L, -2, idx++);
+  }
+
   return 1;
 }
 
