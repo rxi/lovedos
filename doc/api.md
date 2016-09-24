@@ -6,6 +6,7 @@
 * [love.graphics](#lovegraphics)
 * [love.timer](#lovetimer)
 * [love.keyboard](#lovekeyboard)
+* [love.mouse](#lovemouse)
 
 ##### [Objects](#objects-1)
 * [Image](#image)
@@ -177,6 +178,21 @@ callbacks are called.
 ### love.keyboard
 ##### love.keyboard.isDown(code)
 Returns true if the key of the given scancode is currently down.
+
+
+### love.mouse
+##### love.mouse.getPosition()
+Returns 2 values: the current horizontal and vertical position of the mouse.
+
+##### love.mouse.getX()
+Returns the horizontal position of the mouse.
+
+##### love.mouse.getY()
+Returns the vertical position of the mouse.
+
+##### love.mouse.isDown(button, ...)
+Returns true if any of the given mouse buttons are currently pressed.  `button`
+should be the value `1` (left), `2` (right) or `3` (middle).
 
 
 ## Objects
