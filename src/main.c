@@ -64,7 +64,7 @@ int main(void) {
       "if love.load then love.load() end\n"
       "love.timer.step()\n"
       "while true do\n"
-        /* Update mouse and handle mouse events */
+        /* Handle mouse events */
         "for _, e in ipairs(love.mouse.poll()) do\n"
           "if e.type == 'motion' then\n"
             "if love.mousemoved then love.mousemoved(e.x, e.y, e.dx, e.dy) end\n"
@@ -74,7 +74,7 @@ int main(void) {
             "if love.mousereleased then love.mousereleased(e.x, e.y, e.button) end\n"
           "end\n"
         "end\n"
-        /* Keyboard Events */
+        /* Keyboard events */
         "for _, e in ipairs(love.keyboard.poll()) do\n"
           "if e.type == 'down' then\n"
             "if love.keypressed then love.keypressed(e.code) end\n"
@@ -104,7 +104,7 @@ int main(void) {
       /* Init error state */
       "love.graphics.reset()\n"
       "pcall(love.graphics.setBackgroundColor, 89, 157, 220)\n"
-      /* Do error loop */
+      /* Do error main loop */
       "while true do\n"
         "for _, e in ipairs(love.keyboard.getEvents()) do\n"
           "if e.type == 'down' and e.code == 1 then\n"
