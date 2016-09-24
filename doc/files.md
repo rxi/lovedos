@@ -24,5 +24,5 @@ quad.h            | `Quad` object prototypes and typedefs
 quad.c            | `Quad` object
 font.h            | `Font` object prototypes and typedefs
 font.c            | `Font` object
-font\_embedded.c  | The default embedded `Font`'s image data
+font\_embedded.c  | The default embedded `Font`'s ttf file
 lib/              | Libraries
