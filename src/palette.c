@@ -7,25 +7,25 @@
 #define MAP_SIZE  1024
 #define MAP_MASK  (MAP_SIZE - 1)
 
-static struct { unsigned color; int idx; } map[MAP_SIZE];
-static int nextIdx;
-static int inited;
+struct { unsigned color; int idx; } palette_map[MAP_SIZE];
+int palette_nextIdx;
+int palette_inited;
 
 
 void palette_init(void) {
-  if (inited) return;
+  if (palette_inited) return;
   palette_reset();
-  inited = 1;
+  palette_inited = 1;
 }
 
 
 void palette_reset(void) {
   /* Reset nextIdx -- start at idx 1 as 0 is used for transparency */
-  nextIdx = 1;
-  /* Reset map */
+  palette_nextIdx = 1;
+  /* Reset palette_map */
   int i;
   for (i = 0; i < MAP_SIZE; i++) {
-    map[i].idx = -1;
+    palette_map[i].idx = -1;
   }
 }
 
@@ -51,18 +51,18 @@ int palette_colorIdx(int r, int g, int b) {
 
   /* Find color in hashmap */
   int i = h & MAP_MASK;
-  while (map[i].idx != -1) {
-    if (map[i].color == color) {
-      return map[i].idx;
+  while (palette_map[i].idx != -1) {
+    if (palette_map[i].color == color) {
+      return palette_map[i].idx;
     }
     i = (i + 1) & MAP_MASK;
   }
 
   /* Color wasn't found in hashmap -- Add to system palette and map */
-  if (nextIdx >= MAX_IDX) {
+  if (palette_nextIdx >= MAX_IDX) {
     return -1;  /* Return -1 for error if we've exceeded the palette capacity */
   }
-  int idx = nextIdx++;
+  int idx = palette_nextIdx++;
 
   /* Update system palette */
   outp(0x03c8, idx);
@@ -71,7 +71,7 @@ int palette_colorIdx(int r, int g, int b) {
   outp(0x03c9, (color >> 12) & 0x3f); /* b */
 
   /* Add to hashmap and return idx */
-  map[i].color = color;
-  map[i].idx = idx;
+  palette_map[i].color = color;
+  palette_map[i].idx = idx;
   return idx;
 }
