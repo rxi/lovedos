@@ -48,15 +48,17 @@ Returns the height of the screen in pixels.
 ##### love.graphics.getBackgroundColor()
 Returns the currently set background color.
 
-##### love.graphics.setBackgroundColor([red [, green [, blue]]])
+##### love.graphics.setBackgroundColor(red, green, blue)
 Sets the the background color used when `love.graphics.clear()` is called
-without any arguments.
+without any arguments. If called with no arguments the back color is set to
+black.
 
 ##### love.graphics.getColor()
 Returns the currently set color.
 
-##### love.graphics.setColor([red [, green [, blue]]])
-Sets the the color used when drawing.
+##### love.graphics.setColor(red, green, blue)
+Sets the the color used when drawing. If called with no arguments the color is
+set to white.
 
 ##### love.graphics.getBlendMode()
 Returns the currently set blend mode.
@@ -98,11 +100,11 @@ passed then this is set to false by default.
 Resets the font, color, background color, canvas, blend mode and flip mode to
 their defaults.
 
-##### love.graphics.clear([color])
-Clears the screen (or canvas) to the `color`. If no `color` argument is given
-then the background color is used.
+##### love.graphics.clear(red, green, blue)
+Clears the screen (or canvas) to the color. If no color argument is given
+then the background color is used (see `love.graphics.setBackgroundColor()`).
 
-##### love.graphics.draw(image [, quad], x, y)
+##### love.graphics.draw(image [, quad [, x [, y]]])
 Draws the `image` to the screen at the given `x`, `y` position. If a `quad`
 argument is provided then the image is clipped to the provided quad when drawn.
 
