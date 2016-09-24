@@ -20,8 +20,10 @@ function love.draw()
   love.graphics.print('Hello World!', 20, 20)
 end
 
-function love.keypressed(code)
-  if code == 1 then os.exit() end
+function love.keypressed(key)
+  if key == "escape" then
+    os.exit()
+  end
 end
 ```
 
