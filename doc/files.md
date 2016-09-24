@@ -18,6 +18,8 @@ timer.c           | `love.timer` module
 graphics.c        | `love.graphics` module
 keyboard.h        | `love.keyboard` prototype and typedefs
 keyboard.c        | `love.keyboard` module and keyboard interrupt handling
+mouse.h           | `love.mouse` prototype and typedefs
+mouse.c           | `love.mouse` module and mouse handling
 image.h           | `Image` object prototypes and typedefs
 image.c           | `Image` object
 quad.h            | `Quad` object prototypes and typedefs

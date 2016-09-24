@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2016 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ void keyboard_handler() {
       keyboard_events.data[keyboard_events.writei & 31].code = code;
       keyboard_events.data[keyboard_events.writei & 31].type = 0;
       keyboard_events.writei++;
-      
+
     } else {
       /* Key down */
       code |= extended;
@@ -82,7 +82,7 @@ int keyboard_init(void) {
 
 
 void keyboard_deinit(void) {
-  _go32_dpmi_set_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);	
+  _go32_dpmi_set_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
   _go32_dpmi_free_iret_wrapper(&new_keyb_handler_seginfo);
 }
 

@@ -15,6 +15,7 @@
 #include "vga.h"
 #include "luaobj.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "image.h"
 #include "palette.h"
 
@@ -46,6 +47,7 @@ int main(void) {
   vga_init();
   palette_init();
   keyboard_init();
+  mouse_init();
 
   /* Init lua */
   L = luaL_newstate();
@@ -62,6 +64,8 @@ int main(void) {
       "if love.load then love.load() end\n"
       "love.timer.step()\n"
       "while true do\n"
+        /* Update mouse and handle mouse events */
+        "love.mouse.update()\n"
         /* Keyboard Events*/
         "for _, e in ipairs(love.keyboard.getEvents()) do\n"
           "if e.type == 'down' then\n"
