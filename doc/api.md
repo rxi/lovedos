@@ -219,25 +219,12 @@ Returns the position (`x`, `y`) and dimensions (`width`, `height`) of the quad,
 A font used by `love.graphics.print()`. The current font can be set using the
 `love.graphics.setFont()` function.
 
-##### Font:getDimensions(text)
-Returns the width and height in pixels which the provided `text` string would
-take to render.
+##### Font:getWidth(text)
+Returns the width in pixels that the `text` string would take when printed using
+this font.
 
-##### Font:getWidth([text])
-Returns the width in pixels which the provided `text` string would take to
-render. If no `text` argument is provided, the width of a single character is
-returned.
-
-##### Font:getHeight([text])
-Returns the height in pixels which the provided `text` string would take to
-render. If no `text` argument is provided, the height of a single line is
-returned.
-
-##### Font:setCharSpacing(n)
-Sets the size of the gap between each character of text in pixels to `n`.
-
-##### Font:setLineSpacing(n)
-Sets the size of the gap between each character of text in pixels to `n`.
+##### Font:getHeight()
+Returns the height of the font in pixels.
 
 
 ## Callbacks
