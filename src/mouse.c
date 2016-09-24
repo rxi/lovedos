@@ -21,7 +21,6 @@ int mouse_buttonsDown[MOUSE_BUTTON_MAX];
 
 void mouse_init(void) {
   union REGS regs = {};
-  regs.x.ax = 0;
   int86(0x33, &regs, &regs);
   mouse_inited = regs.x.ax ? 1 : 0;
 }
