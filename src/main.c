@@ -77,9 +77,9 @@ int main(void) {
         /* Keyboard events */
         "for _, e in ipairs(love.keyboard.poll()) do\n"
           "if e.type == 'down' then\n"
-            "if love.keypressed then love.keypressed(e.code) end\n"
+            "if love.keypressed then love.keypressed(e.key, e.code) end\n"
           "else\n"
-            "if love.keyreleased then love.keyreleased(e.code) end\n"
+            "if love.keyreleased then love.keyreleased(e.key, e.code) end\n"
           "end\n"
         "end\n"
         /* Update */
