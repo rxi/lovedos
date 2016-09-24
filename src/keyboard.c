@@ -85,6 +85,7 @@ void keyboard_deinit(void) {
  */
 
 const char *scancodeMap[] = {
+  [  0] = "?",
   [  1] = "escape",
   [  2] = "1",
   [  3] = "2",
@@ -217,9 +218,14 @@ const char *scancodeMap[] = {
 
 
 int l_keyboard_isDown(lua_State *L) {
-  int code = luaL_checknumber(L, 1);
-  if (code < 0 || code >= KEYBOARD_KEY_MAX) return 0;
-  lua_pushboolean(L, keyboard_keyStates[code]);
+  int n = lua_gettop(L);
+  int res = 0;
+  int i;
+  for (i = 1; i <= n; i++) {
+    int code = luaL_checkoption(L, 1, NULL, scancodeMap);
+    res |= keyboard_keyStates[code];
+  }
+  lua_pushboolean(L, res);
   return 1;
 }
 
