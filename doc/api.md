@@ -279,7 +279,6 @@ Called when the user releases a mouse button. `x` and `y` are the mouse's
 current position. `button` is the value `1` (left), `2` (right) or `3` (middle).
 
 ##### love.errhand(err)
-Called when an unprotected error occurs in any of the callback functions; `err`
-is the error message. Setting this function overrides the default error
-behaviour of resetting the VGA mode, printing the error and exiting the
-program.
+Called when an unprotected error occurs; `err` is the error message. By default
+this function displays the error message and stacktrace on screen and waits for
+the `escape` key to be pressed before exiting.
