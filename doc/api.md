@@ -179,6 +179,10 @@ callbacks are called.
 ##### love.keyboard.isDown(key, ...)
 Returns true if any of the given keys are currently pressed.
 
+##### love.keyboard.setKeyRepeat(enable)
+Dictates whether repeat `keypressed` events should occur if a key is held down.
+By default this is `false`.
+
 
 ### love.mouse
 ##### love.mouse.getPosition()
@@ -258,9 +262,10 @@ take place.
 Called when the frame is ready to be drawn. All your draw calls should take
 place in this function.
 
-##### love.keypressed(key, code)
+##### love.keypressed(key, code, isrepeat)
 Called when the user presses a key. `key` is the key that was pressed, `code` is
-the raw integer scancode value for the pressed key.
+the raw integer scancode value for the pressed key, `isrepeat` is true if
+this key press event is a repeat.
 
 ##### love.keyreleased(key, code)
 Called when the user releases a key. `key` is the key that was released, `code`
