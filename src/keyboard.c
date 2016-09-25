@@ -14,10 +14,14 @@
 #include "keyboard.h"
 
 #define KEYBOARD_KEY_MAX 256
+#define BUFFER_SIZE 32
+#define BUFFER_MASK (BUFFER_SIZE - 1)
+typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
+
 volatile char keyboard_keyStates[KEYBOARD_KEY_MAX];
 
 volatile struct {
-  struct { unsigned char type; unsigned char code; } data[32];
+  KeyEvent data[32];
   int readi, writei;
 } keyboard_events;
 
@@ -33,25 +37,28 @@ void keyboard_handler() {
     extended = 1 << 7;
 
   } else {
+    volatile KeyEvent *e;
     /* Handle key up / down */
     if (code & (1 << 7)) {
       /* Key up */
       code &= ~(1 << 7);
       code |= extended;
-      keyboard_keyStates[code] = 0;
-      keyboard_events.data[keyboard_events.writei & 31].code = code;
-      keyboard_events.data[keyboard_events.writei & 31].type = 0;
+      e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
+      e->code = code;
+      e->type = 0;
+      e->isrepeat = 0;
       keyboard_events.writei++;
+      keyboard_keyStates[code] = 0;
 
     } else {
       /* Key down */
       code |= extended;
-      if (!keyboard_keyStates[code]) { /* Ignore key repeat */
-        keyboard_keyStates[code] = 1;
-        keyboard_events.data[keyboard_events.writei & 31].code = code;
-        keyboard_events.data[keyboard_events.writei & 31].type = 1;
-        keyboard_events.writei++;
-      }
+      e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
+      e->code = code;
+      e->type = 1;
+      e->isrepeat = keyboard_keyStates[code];
+      keyboard_events.writei++;
+      keyboard_keyStates[code] = 1;
     }
     extended = 0x0;
   }
@@ -238,16 +245,19 @@ int l_keyboard_poll(lua_State *L) {
   while (keyboard_events.readi != keyboard_events.writei) {
     lua_newtable(L);
 
-    int type = keyboard_events.data[keyboard_events.readi & 31].type;
-    int code = keyboard_events.data[keyboard_events.readi & 31].code;
-    code &= 127;
+    KeyEvent e = keyboard_events.data[keyboard_events.readi & BUFFER_MASK];
+    e.code &= 127;
 
-    lua_pushstring(L, type ? "down" : "up");
+    lua_pushstring(L, e.type ? "down" : "up");
     lua_setfield(L, -2, "type");
-    lua_pushnumber(L, code);
+    lua_pushnumber(L, e.code);
     lua_setfield(L, -2, "code");
-    lua_pushstring(L, scancodeMap[code]);
+    lua_pushstring(L, scancodeMap[e.code]);
     lua_setfield(L, -2, "key");
+    if (e.type) { /* Only set `isrepeat` field for keydown event */
+      lua_pushboolean(L, e.isrepeat);
+      lua_setfield(L, -2, "isrepeat");
+    }
 
     lua_rawseti(L, -2, idx++);
     keyboard_events.readi++;
