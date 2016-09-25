@@ -266,6 +266,10 @@ the raw integer scancode value for the pressed key.
 Called when the user releases a key. `key` is the key that was released, `code`
 is the raw integer scancode value for the released key.
 
+##### love.textinput(text)
+Called when text has been entered by the user. For example if shift-2 is pressed
+on an American keyboard layout, the text "@" will be generated.
+
 ##### love.mousemoved(x, y, dx, dy)
 Called when the user moves the mouse. `x` and `y` are the mouse's current
 position, `dx` and `dy` is the amount moved relative to the last mouse position.
