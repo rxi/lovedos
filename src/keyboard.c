@@ -21,6 +21,7 @@ enum { KEY_UP, KEY_DOWN };
 
 typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
 
+volatile int keyboard_allowKeyRepeat = 0;
 volatile char keyboard_keyStates[KEYBOARD_KEY_MAX];
 
 volatile struct {
@@ -46,22 +47,25 @@ void keyboard_handler() {
       /* Key up */
       code &= ~(1 << 7);
       code |= extended;
+      keyboard_keyStates[code] = 0;
       e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
       e->code = code;
       e->type = KEY_UP;
       e->isrepeat = 0;
       keyboard_events.writei++;
-      keyboard_keyStates[code] = 0;
 
     } else {
       /* Key down */
+      int isrepeat = keyboard_keyStates[code];
       code |= extended;
-      e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-      e->code = code;
-      e->type = KEY_DOWN;
-      e->isrepeat = keyboard_keyStates[code];
-      keyboard_events.writei++;
-      keyboard_keyStates[code] = 1;
+      if (!isrepeat || keyboard_allowKeyRepeat) {
+        keyboard_keyStates[code] = 1;
+        e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
+        e->code = code;
+        e->type = KEY_DOWN;
+        e->isrepeat = keyboard_keyStates[code];
+        keyboard_events.writei++;
+      }
     }
     extended = 0x0;
   }
@@ -227,6 +231,12 @@ const char *scancodeMap[] = {
 };
 
 
+int l_keyboard_setKeyRepeat(lua_State *L) {
+  keyboard_allowKeyRepeat = lua_toboolean(L, 1);
+  return 0;
+}
+
+
 int l_keyboard_isDown(lua_State *L) {
   int n = lua_gettop(L);
   int res = 0;
@@ -292,8 +302,9 @@ int l_keyboard_poll(lua_State *L) {
 
 int luaopen_keyboard(lua_State *L) {
   luaL_Reg reg[] = {
-    { "poll",       l_keyboard_poll       },
-    { "isDown",     l_keyboard_isDown     },
+    { "poll",         l_keyboard_poll         },
+    { "setKeyRepeat", l_keyboard_setKeyRepeat },
+    { "isDown",       l_keyboard_isDown       },
     { 0, 0 },
   };
   luaL_newlib(L, reg);
