@@ -176,8 +176,8 @@ callbacks are called.
 
 
 ### love.keyboard
-##### love.keyboard.isDown(code)
-Returns true if the key of the given scancode is currently down.
+##### love.keyboard.isDown(key, ...)
+Returns true if any of the given keys are currently pressed.
 
 
 ### love.mouse
@@ -258,13 +258,13 @@ take place.
 Called when the frame is ready to be drawn. All your draw calls should take
 place in this function.
 
-##### love.keypressed(code)
-Called when the user presses a key. `code` is the scancode value for the
-pressed key.
+##### love.keypressed(key, code)
+Called when the user presses a key. `key` is the key that was pressed, `code` is
+the raw integer scancode value for the pressed key.
 
-##### love.keyreleased(code)
-Called when the user releases a key. `code` is the scancode value for the
-released key.
+##### love.keyreleased(key, code)
+Called when the user releases a key. `key` is the key that was released, `code`
+is the raw integer scancode value for the released key.
 
 ##### love.mousemoved(x, y, dx, dy)
 Called when the user moves the mouse. `x` and `y` are the mouse's current
