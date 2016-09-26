@@ -301,25 +301,6 @@ int l_image_setPixel(lua_State *L) {
 }
 
 
-int l_image_mapPixel(lua_State *L) {
-  image_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  luaL_argcheck(L, lua_isfunction(L, 2), 2, "expected function");
-  int y, x;
-  for (y = 0; y < self->height; y++) {
-    for (x = 0; x < self->width; x++) {
-      lua_pushvalue(L, 2);
-      lua_pushinteger(L, x);
-      lua_pushinteger(L, y);
-      lua_pushinteger(L, self->data[x + y * self->width]);
-      lua_call(L, 3, 1);
-      self->data[x + y * self->width] = lua_tointeger(L, -1);
-      lua_pop(L, 1);
-    }
-  }
-  return 0;
-}
-
-
 int luaopen_image(lua_State *L) {
   luaL_Reg reg[] = {
     { "new",            l_image_new           },
@@ -329,7 +310,6 @@ int luaopen_image(lua_State *L) {
     { "getHeight",      l_image_getHeight     },
     { "getPixel",       l_image_getPixel      },
     { "setPixel",       l_image_setPixel      },
-    { "mapPixel",       l_image_mapPixel      },
     { 0, 0 },
   };
   luaobj_newclass(L, CLASS_NAME, NULL, l_image_new, reg);

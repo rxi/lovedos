@@ -220,11 +220,6 @@ position is outside of the image then 0 is returned.
 Sets the pixel of the image at the position `x`, `y` to `color`. If the
 position is outside of the image then no change is made.
 
-##### Image:mapPixel(fn)
-Takes the function `fn` which is called for each pixel of the image and is
-given the arguments `x`, `y` and `color`: The position of the current pixel and
-its color. Each pixel will be set to the color returned by this function.
-
 
 ### Quad
 A rectangle used to represent the clipping region of an image when drawing.
