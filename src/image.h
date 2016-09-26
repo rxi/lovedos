@@ -30,14 +30,14 @@ typedef struct {
 
 static inline
 void image_setPixel(image_t* self, int x, int y, pixel_t val) {
-  if (x > 0 && x < self->width && y > 0 && y < self->height) {
+  if (x >= 0 && x < self->width && y >= 0 && y < self->height) {
     self->data[x + y * self->width] = val;
   }
 }
 
 static inline
 void image_setMaskPixel(image_t* self, int x, int y, pixel_t val) {
-  if (x > 0 && x < self->width && y > 0 && y < self->height) {
+  if (x >= 0 && x < self->width && y >= 0 && y < self->height) {
     self->mask[x + y * self->width] = val;
   }
 }
