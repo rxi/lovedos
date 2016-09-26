@@ -63,7 +63,7 @@ void keyboard_handler() {
         e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
         e->code = code;
         e->type = KEY_DOWN;
-        e->isrepeat = keyboard_keyStates[code];
+        e->isrepeat = isrepeat;
         keyboard_events.writei++;
       }
     }
