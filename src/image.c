@@ -283,11 +283,24 @@ int l_image_getPixel(lua_State *L) {
   int x = luaL_checkint(L, 2);
   int y = luaL_checkint(L, 3);
   if (x < 0 || x >= self->width || y < 0 || y >= self->height) {
-    lua_pushinteger(L, 0);
+    /* Return `nil` for out of bounds (same as transparent) */
+    lua_pushnil(L);
+    return 1;
   } else {
-    lua_pushinteger(L, self->data[x + y * self->width]);
+    /* Return `nil` if color is transparent, else return 3 channel values */
+    int idx = self->data[x + y * self->width];
+    if (idx == 0) {
+      lua_pushnil(L);
+      return 1;
+    } else {
+      int rgb[3];
+      palette_idxToColor(idx, rgb);
+      lua_pushinteger(L, rgb[0]);
+      lua_pushinteger(L, rgb[1]);
+      lua_pushinteger(L, rgb[2]);
+      return 3;
+    }
   }
-  return 1;
 }
 
 
@@ -295,8 +308,22 @@ int l_image_setPixel(lua_State *L) {
   image_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
   int x = luaL_checkint(L, 2);
   int y = luaL_checkint(L, 3);
-  pixel_t color = luaL_checkint(L, 4);
-  image_setPixel(self, x, y, color);
+  if (lua_isnoneornil(L, 4)) {
+    /* Set transparent */
+    image_setPixel(self, x, y, 0);
+    image_setMaskPixel(self, x, y, 0xff);
+  } else {
+    /* Get color, set pixel and mask */
+    int r = luaL_checkint(L, 4);
+    int g = luaL_checkint(L, 5);
+    int b = luaL_checkint(L, 6);
+    int idx = palette_colorToIdx(r, g, b);
+    if (idx < -1) {
+      luaL_error(L, "color palette exhausted: use fewer unique colors");
+    }
+    image_setPixel(self, x, y, idx);
+    image_setMaskPixel(self, x, y, 0x0);
+  }
   return 0;
 }
 
