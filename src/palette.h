@@ -4,5 +4,6 @@
 void palette_init(void);
 void palette_reset(void);
 int palette_colorToIdx(int r, int g, int b);
+int palette_idxToColor(int idx, int *rgb);
 
 #endif

@@ -8,6 +8,7 @@
 #define MAP_MASK  (MAP_SIZE - 1)
 
 struct { unsigned color; int idx; } palette_map[MAP_SIZE];
+unsigned palette_palette[MAX_IDX];
 int palette_nextIdx;
 int palette_inited;
 
@@ -64,6 +65,9 @@ int palette_colorToIdx(int r, int g, int b) {
   }
   int idx = palette_nextIdx++;
 
+  /* Update internal palette table */
+  palette_palette[idx] = color;
+
   /* Update system palette */
   outp(0x03c8, idx);
   outp(0x03c9, (color      ) & 0x3f); /* r */
@@ -74,4 +78,22 @@ int palette_colorToIdx(int r, int g, int b) {
   palette_map[i].color = color;
   palette_map[i].idx = idx;
   return idx;
+}
+
+
+int palette_idxToColor(int idx, int *rgb) {
+  /* Bounds check, return -1 on error */
+  if (idx <= 0 || idx >= MAX_IDX) {
+    return -1;
+  }
+
+  /* Convert 18bit (6bit-per-channel) internal color to 8bit-per-channel and
+   * store in array */
+  unsigned color = palette_palette[idx];
+  rgb[0] = (color & 0x0003f) << 2;  /* r */
+  rgb[1] = (color & 0x00fc0) >> 4;  /* g */
+  rgb[2] = (color & 0x3f000) >> 10; /* b */
+
+  /* Return 0 for ok */
+  return 0;
 }
