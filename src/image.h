@@ -12,12 +12,6 @@
 #include "luaobj.h"
 
 
-#define image_setPixel(self, x, y, color)\
-  if ((x) > 0 && (x) < (self)->width && (y) > 0 && (y) < (self)->height) {\
-    (self)->data[(x) + (y) * (self)->width] = (color);\
-  }
-
-
 enum {
   IMAGE_NORMAL,
   IMAGE_FAST,
@@ -33,6 +27,20 @@ typedef struct {
   int width, height;
 } image_t;
 
+
+static inline
+void image_setPixel(image_t* self, int x, int y, pixel_t val) {
+  if (x > 0 && x < self->width && y > 0 && y < self->height) {
+    self->data[x + y * self->width] = val;
+  }
+}
+
+static inline
+void image_setMaskPixel(image_t* self, int x, int y, pixel_t val) {
+  if (x > 0 && x < self->width && y > 0 && y < self->height) {
+    self->mask[x + y * self->width] = val;
+  }
+}
 
 void image_setColor(pixel_t color);
 void image_setBlendMode(int mode);
