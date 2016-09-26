@@ -214,11 +214,13 @@ Returns the height in pixels of the image.
 
 ##### Image:getPixel(x, y)
 Returns the color of the pixel at the position `x`, `y` of the image. If the
-position is outside of the image then 0 is returned.
+position is out of bounds or the pixel is set to transparent then `nil` is
+returned.
 
-##### Image:setPixel(x, y, color)
-Sets the pixel of the image at the position `x`, `y` to `color`. If the
-position is outside of the image then no change is made.
+##### Image:setPixel(x, y [, red, green, blue])
+Sets the pixel of the image at position `x`, `y` to the given color; if no color
+is provided the pixel is set to transparent. If the position is out of bounds
+then no change is made.
 
 
 ### Quad
