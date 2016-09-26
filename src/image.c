@@ -61,7 +61,7 @@ const char *image_init(image_t *self, const char *filename) {
     int g = p[1];
     int b = p[2];
     int a = p[3];
-    int idx = palette_colorIdx(r, g, b);
+    int idx = palette_colorToIdx(r, g, b);
     if (idx < 0) {
       errmsg = "color palette exhausted: use fewer unique colors";
       goto fail;

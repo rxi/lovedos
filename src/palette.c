@@ -40,7 +40,7 @@ static unsigned hash(const void *data, int size) {
 }
 
 
-int palette_colorIdx(int r, int g, int b) {
+int palette_colorToIdx(int r, int g, int b) {
   palette_init();
 
   /* Make 18bit rgb color (6bits per-channel) from 8bit channels  */

@@ -39,7 +39,7 @@ static int getColorFromArgs(lua_State *L, int *rgb, const int *def) {
     g = luaL_checkint(L, 2);
     b = luaL_checkint(L, 3);
   }
-  int idx = palette_colorIdx(r, g, b);
+  int idx = palette_colorToIdx(r, g, b);
   if (idx < 0) {
     luaL_error(L, "color palette exhausted: use fewer unique colors");
   }
