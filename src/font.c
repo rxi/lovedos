@@ -28,7 +28,7 @@ static const char *initFont(font_t *self, const void *data, int ptsize) {
   int ascent, descent, lineGap;
   stbtt_GetFontVMetrics(&font, &ascent, &descent, &lineGap);
   float scale = stbtt_ScaleForMappingEmToPixels(&font, ptsize);
-  self->height = (ascent - descent + lineGap) * scale;
+  self->height = (ascent - descent + lineGap) * scale + 0.5;
 
   /* Init image */
   int w = 128, h = 128;
@@ -50,7 +50,7 @@ retry:
   }
 
   /* Adjust glyph yoffsets */
-  int scaledAscent = ascent * scale;
+  int scaledAscent = ascent * scale + 0.5;
   for (i = 0; i < 128; i++) {
     self->glyphs[i].yoff += scaledAscent;
   }
