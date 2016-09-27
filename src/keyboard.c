@@ -13,7 +13,7 @@
 #include "luaobj.h"
 #include "keyboard.h"
 
-#define KEYBOARD_KEY_MAX 256
+#define KEY_MAX 128
 #define BUFFER_SIZE 32
 #define BUFFER_MASK (BUFFER_SIZE - 1)
 
@@ -22,7 +22,7 @@ enum { KEY_UP, KEY_DOWN };
 typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
 
 volatile int keyboard_allowKeyRepeat = 0;
-volatile char keyboard_keyStates[KEYBOARD_KEY_MAX];
+volatile char keyboard_keyStates[KEY_MAX];
 
 volatile struct {
   KeyEvent data[32];
@@ -33,20 +33,15 @@ _go32_dpmi_seginfo old_keyb_handler_seginfo, new_keyb_handler_seginfo;
 
 
 void keyboard_handler() {
-  static unsigned char code, extended;
+  static unsigned char code;
   code = inportb(0x60);
 
-  if (code == 224) {
-    /* Handle extended code */
-    extended = 1 << 7;
-
-  } else {
+  if (code != 224) {
     volatile KeyEvent *e;
     /* Handle key up / down */
     if (code & (1 << 7)) {
       /* Key up */
       code &= ~(1 << 7);
-      code |= extended;
       keyboard_keyStates[code] = 0;
       e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
       e->code = code;
@@ -57,7 +52,6 @@ void keyboard_handler() {
     } else {
       /* Key down */
       int isrepeat = keyboard_keyStates[code];
-      code |= extended;
       if (!isrepeat || keyboard_allowKeyRepeat) {
         keyboard_keyStates[code] = 1;
         e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
@@ -67,7 +61,6 @@ void keyboard_handler() {
         keyboard_events.writei++;
       }
     }
-    extended = 0x0;
   }
 
   outportb(0x20, 0x20);
@@ -78,7 +71,7 @@ void keyboard_handler_end() {}
 
 
 int keyboard_init(void) {
-  _go32_dpmi_lock_data((char*)&keyboard_keyStates, KEYBOARD_KEY_MAX);
+  _go32_dpmi_lock_data((char*)&keyboard_keyStates, KEY_MAX);
   _go32_dpmi_lock_data((char*)&keyboard_events, sizeof(keyboard_events));
   _go32_dpmi_lock_code(keyboard_handler,(unsigned long)keyboard_handler_end -
                        (unsigned long)keyboard_handler);
@@ -177,8 +170,8 @@ const char *scancodeMap[] = {
   [ 75] = "left",
   [ 76] = "5",
   [ 77] = "right",
-  [ 79] = "end",
   [ 78] = "+",
+  [ 79] = "end",
   [ 80] = "down",
   [ 81] = "pagedown",
   [ 82] = "insert",
@@ -259,7 +252,6 @@ int l_keyboard_poll(lua_State *L) {
     lua_newtable(L);
 
     KeyEvent e = keyboard_events.data[keyboard_events.readi & BUFFER_MASK];
-    e.code &= 127;
 
     lua_pushstring(L, e.type == KEY_DOWN ? "down" : "up");
     lua_setfield(L, -2, "type");
