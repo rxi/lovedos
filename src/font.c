@@ -11,6 +11,7 @@
 
 #include "lib/dmt/dmt.h"
 #include "lib/stb/stb_truetype.h"
+#include "filesystem.h"
 #include "font.h"
 #include "luaobj.h"
 
@@ -73,18 +74,12 @@ const char *font_init(font_t *self, const char *filename, int ptsize) {
   memset(self, 0, sizeof(*self));
 
   /* Load font file */
-  fp = fopen(filename, "rb");
-  if (!fp) {
+  int size;
+  data = filesystem_read(filename, &size);
+  if (!data) {
     errmsg = "could not open font file";
     goto fail;
   }
-  fseek(fp, 0, SEEK_END);
-  int sz = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-  data = dmt_malloc(sz);
-  fread(data, sz, 1, fp);
-  fclose(fp);
-  fp = NULL;
 
   /* Init font */
   errmsg = initFont(self, data, ptsize);
@@ -93,13 +88,14 @@ const char *font_init(font_t *self, const char *filename, int ptsize) {
   }
 
   /* Free font data */
-  dmt_free(data);
+  filesystem_free(data);
+  data = NULL;
 
   return NULL;
 
 fail:
   if (fp) fclose(fp);
-  dmt_free(data);
+  filesystem_free(data);
   return errmsg;
 }
 
