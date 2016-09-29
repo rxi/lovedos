@@ -43,7 +43,7 @@ static int onLuaPanic(lua_State *L) {
 
 int luaopen_love(lua_State *L);
 
-int main(void) {
+int main(int argc, char **argv) {
 
   /* Init everything */
   atexit(deinit);
@@ -59,6 +59,20 @@ int main(void) {
   luaL_openlibs(L);
   luaL_requiref(L, "love", luaopen_love, 1);
 
+  /* Create `love.argv` and fill with arguments */
+  lua_getglobal(L, "love");
+  if (!lua_isnil(L, -1)) {
+    lua_newtable(L);
+    int i;
+    for (i = 0; i < argc; i++) {
+      lua_pushstring(L, argv[i]);
+      lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "argv");
+  }
+  lua_pop(L, 1);
+
+  /* Init embedded scripts */
   #include "boot_lua.h"
   int err = luaL_loadbuffer(L, boot_lua, sizeof(boot_lua) - 1, "boot.lua");
 

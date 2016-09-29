@@ -1,6 +1,12 @@
 
 function love.run()
-  if love.load then love.load() end
+  -- Prepare arguments
+  local args = {}
+  for i = 2, #love.argv do
+    args[i - 1] = love.argv[i]
+  end
+  -- Do load callback
+  if love.load then love.load(args) end
   love.timer.step()
   while true do
     -- Handle mouse events
