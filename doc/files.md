@@ -16,6 +16,8 @@ love.c            | The core `love` module
 system.c          | `love.system` module
 timer.c           | `love.timer` module
 graphics.c        | `love.graphics` module
+filesystem.h      | `love.filesystem` prototype and typedefs
+filesystem.c      | `love.filesystem` module and filesystem functions
 keyboard.h        | `love.keyboard` prototype and typedefs
 keyboard.c        | `love.keyboard` module and keyboard interrupt handling
 mouse.h           | `love.mouse` prototype and typedefs
@@ -26,5 +28,5 @@ quad.h            | `Quad` object prototypes and typedefs
 quad.c            | `Quad` object
 font.h            | `Font` object prototypes and typedefs
 font.c            | `Font` object
-font\_embedded.c  | The default embedded `Font`'s ttf file
 lib/              | Libraries
+embed/            | Embedded scripts and files
