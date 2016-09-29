@@ -11,6 +11,7 @@
 
 #include "lib/dmt/dmt.h"
 #include "lib/stb/stb_image.h"
+#include "filesystem.h"
 #include "image.h"
 #include "palette.h"
 #include "luaobj.h"
@@ -37,15 +38,29 @@ void image_setFlip(int mode) {
 const char *image_init(image_t *self, const char *filename) {
   /* Loads an image file into the struct and inits the mask */
   const char *errmsg = NULL;
+  void *filedata = NULL;
+  unsigned char *data32 = NULL;
   memset(self, 0, sizeof(*self));
+
+  /* Load file data */
+  int size;
+  filedata = filesystem_read(filename, &size);
+  if (!filedata) {
+    errmsg = "could not read file";
+    goto fail;
+  }
 
   /* Load 32bit image data */
   int width, height, n;
-  unsigned char *data32 = stbi_load(filename, &width, &height, &n, 4);
+  data32 = stbi_load_from_memory(filedata, size, &width, &height, &n, 4);
   if (!data32) {
     errmsg = "could not load image file";
     goto fail;
   }
+
+  /* Free file data */
+  filesystem_free(filedata);
+  filedata = NULL;
 
   /* Set dimensions and allocate memory */
   int sz = width * height;
@@ -82,6 +97,7 @@ const char *image_init(image_t *self, const char *filename) {
   return NULL;
 
 fail:
+  filesystem_free(filedata);
   free(data32);
   return errmsg;
 }
