@@ -15,6 +15,7 @@
 #include "vga.h"
 #include "luaobj.h"
 #include "keyboard.h"
+#include "filesystem.h"
 #include "mouse.h"
 #include "image.h"
 #include "palette.h"
@@ -27,8 +28,10 @@ static void deinit(void) {
   vga_deinit();
   keyboard_deinit();
   lua_close(L);
+  filesystem_deinit();
   dmt_dump(stdout);
 }
+
 
 static int onLuaPanic(lua_State *L) {
   vga_deinit();
@@ -44,6 +47,7 @@ int main(void) {
 
   /* Init everything */
   atexit(deinit);
+  filesystem_mount("."); /* Mount cwd: temporary */
   vga_init();
   palette_init();
   keyboard_init();
