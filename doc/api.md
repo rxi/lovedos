@@ -247,8 +247,9 @@ Returns the height of the font in pixels.
 
 
 ## Callbacks
-##### love.load()
-Called when LoveDOS is started.
+##### love.load(args)
+Called when LoveDOS is started. `args` is a table containing the command line
+arguments passed to LoveDOS.
 
 ##### love.update(dt)
 Called at the beginning of each frame, `dt` is the amount of time in seconds
