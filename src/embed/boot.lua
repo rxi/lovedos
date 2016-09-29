@@ -1,4 +1,16 @@
 
+-- Add filesystem-compatible package loader
+table.insert(package.loaders, 1, function(modname)
+  modname = modname:gsub("%.", "/")
+  for x in package.path:gmatch("[^;]+") do
+    local filename = x:gsub("?", modname)
+    if love.filesystem.exists(filename) then
+      return assert(loadstring(love.filesystem.read(filename), "=" .. filename))
+    end
+  end
+end)
+
+
 function love.run()
   -- Prepare arguments
   local args = {}
