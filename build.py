@@ -8,7 +8,7 @@ BIN_NAME    = "love.exe"
 EMBED_DIR   = "src/embed"
 TEMPSRC_DIR = ".tempsrc"
 
-CFLAGS    = [ "-O3", "-Wall", "-s", "-Wno-misleading-indentation" ]
+CFLAGS    = [ "-O2", "-Wall", "-s", "-Wno-misleading-indentation" ]
 DLIBS     = [ "m" ]
 DEFINES   = [ "DMT_ABORT_NULL", "LUA_COMPAT_ALL" ]
 INCLUDES  = [ TEMPSRC_DIR ]
