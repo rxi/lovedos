@@ -30,7 +30,9 @@ static void deinit(void) {
   keyboard_deinit();
   lua_close(L);
   filesystem_deinit();
-  dmt_dump(stdout);
+  if ( dmt_usage() > 0 ) {
+    dmt_dump(stdout);
+  }
 }
 
 
