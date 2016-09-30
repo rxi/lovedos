@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
 
   /* Init everything */
   atexit(deinit);
-  filesystem_mount("."); /* Mount cwd: temporary */
   vga_init();
   palette_init();
   keyboard_init();
@@ -73,13 +72,23 @@ int main(int argc, char **argv) {
   lua_pop(L, 1);
 
   /* Init embedded scripts */
+  #include "nogame_lua.h"
   #include "boot_lua.h"
-  int err = luaL_loadbuffer(L, boot_lua, sizeof(boot_lua) - 1, "boot.lua");
-
-  if (err || lua_pcall(L, 0, 0, 0)) {
-    vga_deinit();
-    const char *err = lua_tostring(L, -1);
-    printf("Error\n%s\n", err);
+  struct {
+    const char *name, *data; int size;
+  } items[] = {
+    { "nogame.lua",   nogame_lua,   sizeof(nogame_lua)  },
+    { "boot.lua",     boot_lua,     sizeof(boot_lua)    },
+    { NULL, NULL, 0 }
+  };
+  int i;
+  for (i = 0; items[i].name; i++) {
+    int err = luaL_loadbuffer(L, items[i].data, items[i].size, items[i].name);
+    if (err || lua_pcall(L, 0, 0, 0) != 0) {
+      const char *str = lua_tostring(L, -1);
+      fprintf(stderr, "Error: %s\n", str);
+      abort();
+    }
   }
 
   return 0;

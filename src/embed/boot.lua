@@ -12,6 +12,23 @@ function love.boot()
       end
     end
   end)
+
+  -- Try to mount .exe file, then the first argument
+  for i, v in ipairs { love.argv[1], love.argv[2] } do
+    local mounted = love.filesystem.mount(v)
+    if mounted then
+      break
+    end
+  end
+
+  -- Load main.lua or init `nogame` state
+  if love.filesystem.isFile("main.lua") then
+    require("main")
+  else
+    love.nogame()
+  end
+
+  love.run()
 end
 
 
@@ -87,5 +104,3 @@ end
 
 
 xpcall(love.boot, love.errhand)
-xpcall(function() require("main") end, love.errhand)
-xpcall(love.run, love.errhand)
