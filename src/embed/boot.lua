@@ -1,14 +1,18 @@
 
--- Add filesystem-compatible package loader
-table.insert(package.loaders, 1, function(modname)
-  modname = modname:gsub("%.", "/")
-  for x in package.path:gmatch("[^;]+") do
-    local filename = x:gsub("?", modname)
-    if love.filesystem.exists(filename) then
-      return assert(loadstring(love.filesystem.read(filename), "=" .. filename))
+
+function love.boot()
+  -- Init package.path and add filesystem-compatible package loader
+  package.path = "?.lua;?/init.lua"
+  table.insert(package.loaders, 1, function(modname)
+    modname = modname:gsub("%.", "/")
+    for x in package.path:gmatch("[^;]+") do
+      local file = x:gsub("?", modname)
+      if love.filesystem.exists(file) then
+        return assert(loadstring(love.filesystem.read(file), "=" .. file))
+      end
     end
-  end
-end)
+  end)
+end
 
 
 function love.run()
@@ -17,9 +21,11 @@ function love.run()
   for i = 2, #love.argv do
     args[i - 1] = love.argv[i]
   end
+
   -- Do load callback
   if love.load then love.load(args) end
   love.timer.step()
+
   while true do
     -- Handle mouse events
     for _, e in ipairs(love.mouse.poll()) do
@@ -61,9 +67,11 @@ function love.errhand(msg)
     table.insert(err, line)
   end
   local str = table.concat(err, "\n")
+
   -- Init error state
   love.graphics.reset()
   pcall(love.graphics.setBackgroundColor, 89, 157, 220)
+
   -- Do error main loop
   while true do
     for _, e in ipairs(love.keyboard.poll()) do
@@ -78,5 +86,6 @@ function love.errhand(msg)
 end
 
 
+xpcall(love.boot, love.errhand)
 xpcall(function() require("main") end, love.errhand)
 xpcall(love.run, love.errhand)
