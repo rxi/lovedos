@@ -242,14 +242,80 @@ static void* tar_read(Mount *mnt, const char *filename, int *size) {
 }
 
 
-static int tar_mount(Mount *mnt, const char *path) {
-  mtar_t *tar = dmt_malloc( sizeof(*tar) );
+typedef struct { FILE *fp; int offset; } TarStream;
 
-  /* Try to init tar */
-  int err = mtar_open(tar, path, "r");
+static int tar_stream_read(mtar_t *tar, void *data, unsigned size) {
+  TarStream *t = tar->stream;
+  unsigned res = fread(data, 1, size, t->fp);
+  return (res == size) ? MTAR_ESUCCESS : MTAR_EREADFAIL;
+}
+
+static int tar_stream_seek(mtar_t *tar, unsigned offset) {
+  TarStream *t = tar->stream;
+  int res = fseek(t->fp, t->offset + offset, SEEK_SET);
+  return (res == 0) ? MTAR_ESUCCESS : MTAR_ESEEKFAIL;
+}
+
+static int tar_stream_close(mtar_t *tar) {
+  TarStream *t = tar->stream;
+  fclose(t->fp);
+  dmt_free(t);
+  return MTAR_ESUCCESS;
+}
+
+
+static int tar_mount(Mount *mnt, const char *path) {
+  FILE *fp = NULL;
+  TarStream *stream = NULL;
+  mtar_t *tar = NULL;
+
+
+  /* Try to open file */
+  fp = fopen(path, "rb");
+  if (!fp) {
+    goto fail;
+  }
+
+  /* Init tar stream */
+  stream = dmt_calloc(1, sizeof(*stream));
+  if (!stream) {
+    goto fail;
+  }
+  stream->fp = fp;
+
+  /* Init tar */
+  tar = dmt_calloc(1, sizeof(*tar));
+  if (!tar) {
+    goto fail;
+  }
+  tar->read = tar_stream_read;
+  tar->seek = tar_stream_seek;
+  tar->close = tar_stream_close;
+  tar->stream = stream;
+
+  /* Check start of file for valid tar header */
+  mtar_header_t h;
+  int err = mtar_read_header(tar, &h);
+
+  /* If checking the start of the file failed then check the end of file for a
+   * "TAR\0" tag and offset, this would have been added when packaging (see
+   * `package.c`) to indicate the offset of the tar archive's beginning from the
+   * file's end */
   if (err) {
-    dmt_free(tar);
-    return FILESYSTEM_EFAILURE;
+    int offset;
+    char buf[4] = "";
+    fseek(fp, -8, SEEK_END);
+    fread(buf, 1, 4, fp);
+    fread(&offset, 1, 4, fp);
+    if ( !memcmp(buf, "TAR\0", 4) ) {
+      fseek(fp, -offset, SEEK_END);
+      stream->offset = ftell(fp);
+    }
+    mtar_rewind(tar);
+    err = mtar_read_header(tar, &h);
+    if (err) {
+      goto fail;
+    }
   }
 
   /* Init mount */
@@ -262,6 +328,12 @@ static int tar_mount(Mount *mnt, const char *path) {
 
   /* Return ok */
   return FILESYSTEM_ESUCCESS;
+
+fail:
+  if (fp) fclose(fp);
+  dmt_free(tar);
+  dmt_free(stream);
+  return FILESYSTEM_EFAILURE;
 }
 
 

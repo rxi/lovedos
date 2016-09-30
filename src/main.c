@@ -19,6 +19,7 @@
 #include "mouse.h"
 #include "image.h"
 #include "palette.h"
+#include "package.h"
 
 
 static lua_State *L;
@@ -44,6 +45,11 @@ static int onLuaPanic(lua_State *L) {
 int luaopen_love(lua_State *L);
 
 int main(int argc, char **argv) {
+
+  /* Handle package command */
+  if ( package_run(argc, argv) == PACKAGE_ESUCCESS ) {
+    exit(EXIT_SUCCESS);
+  }
 
   /* Init everything */
   atexit(deinit);
