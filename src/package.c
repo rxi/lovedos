@@ -107,12 +107,14 @@ static void write_dir(mtar_t *tar, const char *indir, const char *outdir) {
   }
 
   /* Write dir */
-  mtar_header_t h;
-  memset(&h, 0, sizeof(h));
-  concat(h.name, sizeof(h.name), outdir, NULL);
-  h.type = MTAR_TDIR;
-  h.mode = 0664;
-  mtar_write_header(tar, &h);
+  if (*outdir) {
+    mtar_header_t h;
+    memset(&h, 0, sizeof(h));
+    concat(h.name, sizeof(h.name), outdir, NULL);
+    h.type = MTAR_TDIR;
+    h.mode = 0664;
+    mtar_write_header(tar, &h);
+  }
 
   /* Write files */
   while ( (ep = readdir(dir)) ) {
