@@ -13,8 +13,12 @@
 #include <stddef.h>
 
 enum {
-  FILESYSTEM_ESUCCESS =  0,
-  FILESYSTEM_EFAILURE = -1,
+  FILESYSTEM_ESUCCESS   =  0,
+  FILESYSTEM_EFAILURE   = -1,
+  FILESYSTEM_ETOOLONG   = -2,
+  FILESYSTEM_EMOUNTED   = -3,
+  FILESYSTEM_ENOMOUNT   = -4,
+  FILESYSTEM_EMOUNTFAIL = -5
 };
 
 const char* filesystem_strerror(int err);

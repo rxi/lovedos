@@ -69,7 +69,7 @@ static int concat_path(char *dst, const char *dir, const char *filename) {
 
   /* Fail if the resultant path would overflow buffer */
   if (dirlen + filenamelen + 2 > MAX_PATH) {
-    return FILESYSTEM_EFAILURE;
+    return FILESYSTEM_ETOOLONG;
   }
 
   /* Write full name to buffer and return ok */
@@ -387,8 +387,12 @@ fail:
 
 const char* filesystem_strerror(int err) {
   switch (err) {
-    case FILESYSTEM_ESUCCESS: return "success";
-    case FILESYSTEM_EFAILURE: return "failure";
+    case FILESYSTEM_ESUCCESS    : return "success";
+    case FILESYSTEM_EFAILURE    : return "failure";
+    case FILESYSTEM_ETOOLONG    : return "path too long";
+    case FILESYSTEM_EMOUNTED    : return "path already mounted";
+    case FILESYSTEM_ENOMOUNT    : return "path is not mounted";
+    case FILESYSTEM_EMOUNTFAIL  : return "could not mount path";
   }
   return "unknown error";
 }
@@ -405,12 +409,12 @@ void filesystem_deinit(void) {
 int filesystem_mount(const char *path) {
   /* Check path length is ok */
   if ( strlen(path) >= MAX_PATH ) {
-    return FILESYSTEM_EFAILURE;
+    return FILESYSTEM_ETOOLONG;
   }
   /* Check path isn't already mounted */
   FOREACH_MOUNT(m) {
     if ( !strcmp(m->path, path) ) {
-      return FILESYSTEM_EFAILURE;
+      return FILESYSTEM_EMOUNTED;
     }
   }
 
@@ -429,7 +433,7 @@ int filesystem_mount(const char *path) {
 
   /* Fail */
   filesystem_mountIdx--;
-  return FILESYSTEM_EFAILURE;
+  return FILESYSTEM_EMOUNTFAIL;
 
 success:
   return FILESYSTEM_ESUCCESS;
@@ -448,7 +452,7 @@ int filesystem_unmount(const char *path) {
       return FILESYSTEM_ESUCCESS;
     }
   }
-  return FILESYSTEM_EFAILURE;
+  return FILESYSTEM_ENOMOUNT;
 }
 
 
