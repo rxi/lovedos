@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2016 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -13,7 +13,6 @@
 
 long long timer_lastStep;
 double timer_lastDt;
-double timer_elapsed;
 
 double  timer_avgLastDt;
 double  timer_avgAcc = 1;
@@ -29,7 +28,7 @@ int l_timer_step(lua_State *L) {
    * trying for a proper value if this occurs. */
   do {
     now = uclock();
-    timer_lastDt = (now - timer_lastStep) / (double)UCLOCKS_PER_SEC;
+    timer_lastDt = (now - timer_lastStep) / (double) UCLOCKS_PER_SEC;
   } while (timer_lastDt < 0);
   timer_lastStep = now;
   /* Do average */
@@ -42,8 +41,6 @@ int l_timer_step(lua_State *L) {
     timer_avgAcc = 0;
     timer_avgCount = 0;
   }
-  /* Do elapsed */
-  timer_elapsed += timer_lastDt;
   return 0;
 }
 
@@ -73,7 +70,7 @@ int l_timer_getFPS(lua_State *L) {
 
 
 int l_timer_getTime(lua_State *L) {
-  lua_pushnumber(L, timer_elapsed);
+  lua_pushnumber(L, uclock() / (double) UCLOCKS_PER_SEC);
   return 1;
 }
 
