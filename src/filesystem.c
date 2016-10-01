@@ -94,12 +94,20 @@ static int concat_and_get_file_type(const char *dir, const char *filename) {
 }
 
 
-static unsigned hashstr(const char *str) {
+static unsigned hash_string(const char *str) {
   unsigned hash = 5381;
   while (*str) {
     hash = ((hash << 5) + hash) ^ *str++;
   }
   return hash;
+}
+
+
+static void strip_trailing_slash(char *str) {
+  int len = strlen(str);
+  if (len > 0 && str[len - 1] == '/') {
+    str[len - 1] = '\0';
+  }
 }
 
 
@@ -191,7 +199,7 @@ static int tar_find(Mount *mnt, const char *filename, mtar_header_t *h) {
   /* Hash filename and linear search map for matching hash, read header and
    * check against filename if the hashes match */
   TarMount *tm = mnt->udata;
-  unsigned hash = hashstr(filename);
+  unsigned hash = hash_string(filename);
   int i;
   for (i = 0; i < tm->nfiles; i++) {
 
@@ -199,18 +207,13 @@ static int tar_find(Mount *mnt, const char *filename, mtar_header_t *h) {
       /* Seek to and load header */
       mtar_seek(&tm->tar, tm->map[i].pos);
       mtar_read_header(&tm->tar, h);
-
-      /* Strip trailing `/` */
-      int len = strlen(h->name);
-      if (len > 0 && h->name[len - 1] == '/') {
-        h->name[len - 1] = '\0';
-      }
-
       /* Compare names */
+      strip_trailing_slash(h->name);
       if ( !strcmp(h->name, filename) ) {
         return FILESYSTEM_ESUCCESS;
       }
     }
+
   }
   return FILESYSTEM_EFAILURE;
 }
@@ -352,7 +355,8 @@ static int tar_mount(Mount *mnt, const char *path) {
       tm->map = dmt_realloc(tm->map, cap * sizeof(*tm->map));
     }
     /* Store entry */
-    tm->map[n].hash = hashstr(h.name);
+    strip_trailing_slash(h.name);
+    tm->map[n].hash = hash_string(h.name);
     tm->map[n].pos = tar->pos;
     /* Next */
     mtar_next(tar);
