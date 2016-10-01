@@ -65,6 +65,7 @@ const char* mtar_strerror(int err);
 int mtar_open(mtar_t *tar, const char *filename, const char *mode);
 int mtar_close(mtar_t *tar);
 
+int mtar_seek(mtar_t *tar, unsigned pos);
 int mtar_rewind(mtar_t *tar);
 int mtar_next(mtar_t *tar);
 int mtar_find(mtar_t *tar, const char *name, mtar_header_t *h);

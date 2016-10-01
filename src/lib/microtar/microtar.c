@@ -60,13 +60,6 @@ static unsigned checksum(const mtar_raw_header_t* rh) {
 }
 
 
-static int tseek(mtar_t *tar, unsigned pos) {
-  int err = tar->seek(tar, pos);
-  tar->pos = pos;
-  return err;
-}
-
-
 static int tread(mtar_t *tar, void *data, unsigned size) {
   int err = tar->read(tar, data, size);
   tar->pos += size;
@@ -220,8 +213,15 @@ int mtar_close(mtar_t *tar) {
 }
 
 
+int mtar_seek(mtar_t *tar, unsigned pos) {
+  int err = tar->seek(tar, pos);
+  tar->pos = pos;
+  return err;
+}
+
+
 int mtar_rewind(mtar_t *tar) {
-  return tseek(tar, 0);
+  return mtar_seek(tar, 0);
 }
 
 
@@ -235,7 +235,7 @@ int mtar_next(mtar_t *tar) {
   }
   /* Seek to next record */
   n = round_up(h.size, 512) + sizeof(mtar_raw_header_t);
-  return tseek(tar, tar->pos + n);
+  return mtar_seek(tar, tar->pos + n);
 }
 
 
@@ -276,7 +276,7 @@ int mtar_read_header(mtar_t *tar, mtar_header_t *h) {
     return err;
   }
   /* Seek back to start of header */
-  err = tseek(tar, tar->last_header);
+  err = mtar_seek(tar, tar->last_header);
   if (err) {
     return err;
   }
@@ -297,7 +297,7 @@ int mtar_read_data(mtar_t *tar, void *ptr, unsigned size) {
       return err;
     }
     /* Seek past header and init remaining data */
-    err = tseek(tar, tar->pos + sizeof(mtar_raw_header_t));
+    err = mtar_seek(tar, tar->pos + sizeof(mtar_raw_header_t));
     if (err) {
       return err;
     }
@@ -312,7 +312,7 @@ int mtar_read_data(mtar_t *tar, void *ptr, unsigned size) {
   /* If there is no remaining data we've finished reading and seek back to the
    * header */
   if (tar->remaining_data == 0) {
-    return tseek(tar, tar->last_header);
+    return mtar_seek(tar, tar->last_header);
   }
   return MTAR_ESUCCESS;
 }
