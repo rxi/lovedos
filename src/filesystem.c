@@ -94,6 +94,15 @@ static int concat_and_get_file_type(const char *dir, const char *filename) {
 }
 
 
+static unsigned hashstr(const char *str) {
+  unsigned hash = 5381;
+  while (*str) {
+    hash = ((hash << 5) + hash) ^ *str++;
+  }
+  return hash;
+}
+
+
 /*==================*/
 /* Directory Mount  */
 /*==================*/
@@ -167,45 +176,63 @@ static int dir_mount(Mount *mnt, const char *path) {
 /* Tar Mount        */
 /*==================*/
 
+typedef struct { unsigned hash, pos; } TarFileRef;
+
 typedef struct {
   mtar_t tar;
   FILE *fp;
   int offset;
+  TarFileRef *map;
+  int nfiles;
 } TarMount;
 
 
-static int tar_find(mtar_t *tar, const char *filename, mtar_header_t *h) {
-  int err;
-  char buf[MAX_PATH + 1];
-  /* Try to match */
-  err = mtar_find(tar, filename, h);
-  if (err != MTAR_ENOTFOUND) {
-    return err;
+static int tar_find(Mount *mnt, const char *filename, mtar_header_t *h) {
+  /* Hash filename and linear search map for matching hash, read header and
+   * check against filename if the hashes match */
+  TarMount *tm = mnt->udata;
+  unsigned hash = hashstr(filename);
+  int i;
+  for (i = 0; i < tm->nfiles; i++) {
+
+    if (tm->map[i].hash == hash) {
+      /* Seek to and load header */
+      mtar_seek(&tm->tar, tm->map[i].pos);
+      mtar_read_header(&tm->tar, h);
+
+      /* Strip trailing `/` */
+      int len = strlen(h->name);
+      if (len > 0 && h->name[len - 1] == '/') {
+        h->name[len - 1] = '\0';
+      }
+
+      /* Compare names */
+      if ( !strcmp(h->name, filename) ) {
+        return FILESYSTEM_ESUCCESS;
+      }
+    }
   }
-  /* Try to match with "/" at the end */
-  sprintf(buf, "%s/", filename);
-  return mtar_find(tar, buf, h);
+  return FILESYSTEM_EFAILURE;
 }
 
 
 static void tar_unmount(Mount *mnt) {
-  mtar_t *tar = mnt->udata;
-  mtar_close(tar);
-  dmt_free(tar);
+  TarMount *tm = mnt->udata;
+  mtar_close(&tm->tar);
+  dmt_free(tm->map);
+  dmt_free(tm);
 }
 
 
 static int tar_exists(Mount *mnt, const char *filename) {
-  mtar_t *tar = mnt->udata;
-  return tar_find(tar, filename, NULL) == MTAR_ESUCCESS;
+  mtar_header_t h;
+  return tar_find(mnt, filename, &h) == FILESYSTEM_ESUCCESS;
 }
 
 
 static int tar_isFile(Mount *mnt, const char *filename) {
-  mtar_t *tar = mnt->udata;
-  int err;
   mtar_header_t h;
-  err = mtar_find(tar, filename, &h);
+  int err = tar_find(mnt, filename, &h);
   if (err) {
     return 0;
   }
@@ -214,10 +241,8 @@ static int tar_isFile(Mount *mnt, const char *filename) {
 
 
 static int tar_isDirectory(Mount *mnt, const char *filename) {
-  mtar_t *tar = mnt->udata;
-  int err;
   mtar_header_t h;
-  err = tar_find(tar, filename, &h);
+  int err = tar_find(mnt, filename, &h);
   if (err) {
     return 0;
   }
@@ -231,7 +256,7 @@ static void* tar_read(Mount *mnt, const char *filename, int *size) {
   mtar_header_t h;
 
   /* Find and load header for file */
-  err = mtar_find(tar, filename, &h);
+  err = tar_find(mnt, filename, &h);
   if (err) {
     return 0;
   }
@@ -249,20 +274,22 @@ static void* tar_read(Mount *mnt, const char *filename, int *size) {
 
 
 static int tar_stream_read(mtar_t *tar, void *data, unsigned size) {
-  TarMount *t = tar->stream;
-  unsigned res = fread(data, 1, size, t->fp);
+  TarMount *tm = tar->stream;
+  unsigned res = fread(data, 1, size, tm->fp);
   return (res == size) ? MTAR_ESUCCESS : MTAR_EREADFAIL;
 }
 
+
 static int tar_stream_seek(mtar_t *tar, unsigned offset) {
-  TarMount *t = tar->stream;
-  int res = fseek(t->fp, t->offset + offset, SEEK_SET);
+  TarMount *tm = tar->stream;
+  int res = fseek(tm->fp, tm->offset + offset, SEEK_SET);
   return (res == 0) ? MTAR_ESUCCESS : MTAR_ESEEKFAIL;
 }
 
+
 static int tar_stream_close(mtar_t *tar) {
-  TarMount *t = tar->stream;
-  fclose(t->fp);
+  TarMount *tm = tar->stream;
+  fclose(tm->fp);
   return MTAR_ESUCCESS;
 }
 
@@ -279,9 +306,6 @@ static int tar_mount(Mount *mnt, const char *path) {
 
   /* Init TarMount */
   tm = dmt_calloc(1, sizeof(*tm));
-  if (!tm) {
-    goto fail;
-  }
   tm->fp = fp;
 
   /* Init tar */
@@ -316,6 +340,26 @@ static int tar_mount(Mount *mnt, const char *path) {
     }
   }
 
+  /* Iterate all files and store [namehash:position] pairs; this is used by
+   * tar_find() */
+  mtar_rewind(tar);
+  int n = 0;
+  int cap = 0;
+  while ( (mtar_read_header(tar, &h)) == MTAR_ESUCCESS ) {
+    /* Realloc if map capacity was reached */
+    if (n >= cap) {
+      cap = cap ? (cap << 1) : 16;
+      tm->map = dmt_realloc(tm->map, cap * sizeof(*tm->map));
+    }
+    /* Store entry */
+    tm->map[n].hash = hashstr(h.name);
+    tm->map[n].pos = tar->pos;
+    /* Next */
+    mtar_next(tar);
+    n++;
+  }
+  tm->nfiles = n;
+
   /* Init mount */
   mnt->udata = tar;
   mnt->unmount = tar_unmount;
@@ -329,7 +373,10 @@ static int tar_mount(Mount *mnt, const char *path) {
 
 fail:
   if (fp) fclose(fp);
-  dmt_free(tm);
+  if (tm) {
+    dmt_free(tm->map);
+    dmt_free(tm);
+  }
   return FILESYSTEM_EFAILURE;
 }
 
