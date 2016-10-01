@@ -176,8 +176,7 @@ static int tar_find(mtar_t *tar, const char *filename, mtar_header_t *h) {
     return err;
   }
   /* Try to match with "/" at the end */
-  strcpy(buf, filename);
-  strcat(buf, "/");
+  sprintf(buf, "%s/", filename);
   return mtar_find(tar, buf, h);
 }
 
