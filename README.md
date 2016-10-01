@@ -10,10 +10,16 @@ You can download LoveDOS from the
 using DOS as your operating system then [DOSbox](http://www.dosbox.com/) can be
 used to emulate a DOS computer.
 
-When you run love.exe it searches for a file named "main.lua" in its current
-folder; the code in "main.lua" is then loaded and executed. A small example
-program which displays white text on a black background and exits when the
-`escape` key is pressed is as follows:
+When you run `love.exe` it will expect its first argument to be your game's
+directory. The file `main.lua` will then be searched for and executed. If, for
+example, your project was in a directory named `mygame` you would run the
+following:
+```batch
+love mygame
+```
+
+A small example program which displays white text on a black background and
+exits when the `escape` key is pressed is as follows:
 
 ```lua
 function love.draw()
@@ -29,6 +35,9 @@ end
 
 The [doc/api.md](doc/api.md) file provides a reference and overview of all of
 the built-in LoveDOS modules, functions and callbacks.
+
+The [doc/packaging.md](doc/packaging.md) file provides instructions for
+packaging your game for distribution.
 
 
 ## Building
