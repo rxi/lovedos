@@ -141,7 +141,7 @@ dimensions as the screen.
 ##### love.graphics.newQuad(x, y, width, height)
 Creates and returns a new quad.
 
-##### love.graphics.newFont([filename [, ptsize]])
+##### love.graphics.newFont([filename ,] ptsize)
 Creates and returns a new font. `filename` should be the name of a ttf file and
 `ptsize` its size. If no `filename` is provided the built in font is used.
 

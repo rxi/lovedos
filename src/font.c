@@ -152,8 +152,15 @@ void font_blit(font_t *self, pixel_t *buf, int bufw, int bufh,
 
 
 int l_font_new(lua_State *L) {
-  const char *filename = lua_isnoneornil(L, 1) ? NULL : luaL_checkstring(L, 1);
-  int ptsize = luaL_optnumber(L, 2, 12);
+  const char *filename;
+  int ptsize = 12;
+  if ( lua_isnoneornil(L, 2) ) {
+    filename = NULL;
+    ptsize = luaL_optnumber(L, 1, ptsize);
+  } else {
+    filename = luaL_checkstring(L, 1);
+    ptsize = luaL_optnumber(L, 2, ptsize);
+  }
   font_t *self = luaobj_newudata(L, sizeof(*self));
   luaobj_setclass(L, CLASS_TYPE, CLASS_NAME);
   if (filename) {
