@@ -157,6 +157,8 @@ static void* dir_read(Mount *mnt, const char *filename, int *size) {
     return NULL;
   }
   fread(p, 1, *size, fp);
+  /* Close file and return data */
+  fclose(fp);
   return p;
 }
 
