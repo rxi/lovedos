@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2016 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -15,6 +15,7 @@ typedef unsigned char pixel_t;
 
 void vga_init(void);
 void vga_deinit(void);
+void vga_setPalette(int idx, int r, int g, int b);
 void vga_update(pixel_t *buffer);
 
 #endif

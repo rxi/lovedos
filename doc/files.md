@@ -6,8 +6,8 @@ code.
 File              | Description
 ------------------|------------------------------------------------------------
 main.c            | The entry point, initialises everything
-vga.h             | Function prototypes for initing / deiniting vga mode 13h
-vga.c             | Functions for initing / deiniting vga mode 13h
+vga.h             | Function prototypes for vga mode 13h
+vga.c             | Functions for vga mode 13h
 palette.h         | Function prototypes for palette handling
 palette.c         | Functions for palette handling
 package.h         | Function prototypes for creating package

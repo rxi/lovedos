@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2016 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -31,6 +31,14 @@ void vga_deinit(void) {
   union REGS regs = {};
   regs.h.al = 0x3;
   int86(0x10, &regs, &regs);
+}
+
+
+void vga_setPalette(int idx, int r, int g, int b) {
+  outp(0x03c8, idx);
+  outp(0x03c9, (r >> 2) & 0x3f);
+  outp(0x03c9, (g >> 2) & 0x3f);
+  outp(0x03c9, (b >> 2) & 0x3f);
 }
 
 

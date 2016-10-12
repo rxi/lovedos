@@ -9,6 +9,7 @@
 #include <pc.h>
 
 #include "palette.h"
+#include "vga.h"
 
 #define MAX_IDX   256
 #define MAP_SIZE  1024
@@ -75,11 +76,8 @@ int palette_colorToIdx(int r, int g, int b) {
   /* Update internal palette table */
   palette_palette[idx] = color;
 
-  /* Update system palette (18bit; 6bit per-channel) */
-  outp(0x03c8, idx);
-  outp(0x03c9, (color >>  2) & 0x3f); /* r */
-  outp(0x03c9, (color >> 10) & 0x3f); /* g */
-  outp(0x03c9, (color >> 18) & 0x3f); /* b */
+  /* Update system palette */
+  vga_setPalette(idx, r, g, b);
 
   /* Add to hashmap and return idx */
   palette_map[i].color = color;
