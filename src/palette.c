@@ -51,8 +51,8 @@ static unsigned hash(const void *data, int size) {
 int palette_colorToIdx(int r, int g, int b) {
   palette_init();
 
-  /* Make 18bit rgb color (6bits per-channel) from 8bit channels  */
-  unsigned color = ((b & 0xfc) << 10) | ((g & 0xfc) << 4) | ((r & 0xfc) >> 2);
+  /* Make 24bit rgb color */
+  unsigned color = ((b  & 0xff) << 16) | ((g & 0xff) << 8) | (r & 0xff);
 
   /* Hash color */
   unsigned h = hash(&color, sizeof(color));
@@ -75,11 +75,11 @@ int palette_colorToIdx(int r, int g, int b) {
   /* Update internal palette table */
   palette_palette[idx] = color;
 
-  /* Update system palette */
+  /* Update system palette (18bit; 6bit per-channel) */
   outp(0x03c8, idx);
-  outp(0x03c9, (color      ) & 0x3f); /* r */
-  outp(0x03c9, (color >>  6) & 0x3f); /* g */
-  outp(0x03c9, (color >> 12) & 0x3f); /* b */
+  outp(0x03c9, (color >>  2) & 0x3f); /* r */
+  outp(0x03c9, (color >> 10) & 0x3f); /* g */
+  outp(0x03c9, (color >> 18) & 0x3f); /* b */
 
   /* Add to hashmap and return idx */
   palette_map[i].color = color;
@@ -94,12 +94,11 @@ int palette_idxToColor(int idx, int *rgb) {
     return -1;
   }
 
-  /* Convert 18bit (6bit-per-channel) internal color to 8bit-per-channel and
-   * store in array */
+  /* Store color in array */
   unsigned color = palette_palette[idx];
-  rgb[0] = (color & 0x0003f) << 2;  /* r */
-  rgb[1] = (color & 0x00fc0) >> 4;  /* g */
-  rgb[2] = (color & 0x3f000) >> 10; /* b */
+  rgb[0] = (color      ) & 0xff; /* r */
+  rgb[1] = (color >>  8) & 0xff; /* g */
+  rgb[2] = (color >> 16) & 0xff; /* b */
 
   /* Return 0 for ok */
   return 0;
