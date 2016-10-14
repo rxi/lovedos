@@ -253,8 +253,8 @@ int l_image_newCanvas(lua_State *L) {
   int width = VGA_WIDTH;
   int height = VGA_HEIGHT;
   if (lua_gettop(L) > 0) {
-    width = luaL_checkint(L, 1);
-    height = luaL_checkint(L, 2);
+    width = luaL_checknumber(L, 1);
+    height = luaL_checknumber(L, 2);
     if (width <= 0) luaL_argerror(L, 1, "width must be larger than 0");
     if (height <= 0) luaL_argerror(L, 2, "height must be larger than 0");
   }
@@ -296,8 +296,8 @@ int l_image_getHeight(lua_State *L) {
 
 int l_image_getPixel(lua_State *L) {
   image_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int x = luaL_checkint(L, 2);
-  int y = luaL_checkint(L, 3);
+  int x = luaL_checknumber(L, 2);
+  int y = luaL_checknumber(L, 3);
   if (x < 0 || x >= self->width || y < 0 || y >= self->height) {
     /* Return `nil` for out of bounds (same as transparent) */
     lua_pushnil(L);
@@ -322,17 +322,17 @@ int l_image_getPixel(lua_State *L) {
 
 int l_image_setPixel(lua_State *L) {
   image_t *self = luaobj_checkudata(L, 1, CLASS_TYPE);
-  int x = luaL_checkint(L, 2);
-  int y = luaL_checkint(L, 3);
+  int x = luaL_checknumber(L, 2);
+  int y = luaL_checknumber(L, 3);
   if (lua_isnoneornil(L, 4)) {
     /* Set transparent */
     image_setPixel(self, x, y, 0);
     image_setMaskPixel(self, x, y, 0xff);
   } else {
     /* Get color, set pixel and mask */
-    int r = luaL_checkint(L, 4);
-    int g = luaL_checkint(L, 5);
-    int b = luaL_checkint(L, 6);
+    int r = luaL_checknumber(L, 4);
+    int g = luaL_checknumber(L, 5);
+    int b = luaL_checknumber(L, 6);
     int idx = palette_colorToIdx(r, g, b);
     if (idx < -1) {
       luaL_error(L, "color palette exhausted: use fewer unique colors");

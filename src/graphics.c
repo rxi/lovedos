@@ -35,9 +35,9 @@ static int getColorFromArgs(lua_State *L, int *rgb, const int *def) {
     g = def[1];
     b = def[2];
   } else {
-    r = luaL_checkint(L, 1);
-    g = luaL_checkint(L, 2);
-    b = luaL_checkint(L, 3);
+    r = luaL_checknumber(L, 1);
+    g = luaL_checknumber(L, 2);
+    b = luaL_checknumber(L, 3);
   }
   int idx = palette_colorToIdx(r, g, b);
   if (idx < 0) {
@@ -258,11 +258,11 @@ int l_graphics_draw(lua_State *L) {
   int x, y;
   if (!lua_isnone(L, 2) && lua_type(L, 2) != LUA_TNUMBER) {
     quad = luaobj_checkudata(L, 2, LUAOBJ_TYPE_QUAD);
-    x = luaL_optint(L, 3, 0);
-    y = luaL_optint(L, 4, 0);
+    x = luaL_optnumber(L, 3, 0);
+    y = luaL_optnumber(L, 4, 0);
   } else {
-    x = luaL_optint(L, 2, 0);
-    y = luaL_optint(L, 3, 0);
+    x = luaL_optnumber(L, 2, 0);
+    y = luaL_optnumber(L, 3, 0);
   }
   pixel_t *buf = graphics_canvas->data;
   int bufw = graphics_canvas->width;
@@ -279,8 +279,8 @@ int l_graphics_draw(lua_State *L) {
 
 
 int l_graphics_point(lua_State *L) {
-  int x = luaL_checkint(L, 1);
-  int y = luaL_checkint(L, 2);
+  int x = luaL_checknumber(L, 1);
+  int y = luaL_checknumber(L, 2);
   image_setPixel(graphics_canvas, x, y, graphics_color);
   return 0;
 }
@@ -288,14 +288,14 @@ int l_graphics_point(lua_State *L) {
 
 int l_graphics_line(lua_State *L) {
   int argc = lua_gettop(L);
-  int lastx = luaL_checkint(L, 1);
-  int lasty = luaL_checkint(L, 2);
+  int lastx = luaL_checknumber(L, 1);
+  int lasty = luaL_checknumber(L, 2);
   int idx = 3;
   while (idx < argc) {
     int x0 = lastx;
     int y0 = lasty;
-    int x1 = luaL_checkint(L, idx);
-    int y1 = luaL_checkint(L, idx + 1);
+    int x1 = luaL_checknumber(L, idx);
+    int y1 = luaL_checknumber(L, idx + 1);
     lastx = x1;
     lasty = y1;
     /* Draw line */
@@ -335,10 +335,10 @@ int l_graphics_line(lua_State *L) {
 
 int l_graphics_rectangle(lua_State *L) {
   const char *mode = luaL_checkstring(L, 1);
-  int x = luaL_checkint(L, 2);
-  int y = luaL_checkint(L, 3);
-  int x2 = luaL_checkint(L, 4) + x;
-  int y2 = luaL_checkint(L, 5) + y;
+  int x = luaL_checknumber(L, 2);
+  int y = luaL_checknumber(L, 3);
+  int x2 = luaL_checknumber(L, 4) + x;
+  int y2 = luaL_checknumber(L, 5) + y;
   int fill = 0;
   if (!strcmp(mode, "fill")) {
     fill = 1;
@@ -381,9 +381,9 @@ int l_graphics_rectangle(lua_State *L) {
 
 int l_graphics_circle(lua_State *L) {
   const char *mode = luaL_checkstring(L, 1);
-  int x = luaL_checkint(L, 2);
-  int y = luaL_checkint(L, 3);
-  int radius = luaL_checkint(L, 4);
+  int x = luaL_checknumber(L, 2);
+  int y = luaL_checknumber(L, 3);
+  int radius = luaL_checknumber(L, 4);
   int fill = 0;
   if (!strcmp(mode, "fill")) {
     fill = 1;
@@ -454,8 +454,8 @@ int l_graphics_circle(lua_State *L) {
 int l_graphics_print(lua_State *L) {
   luaL_checkany(L, 1);
   const char *str = luaL_tolstring(L, 1, NULL);
-  int x = luaL_checkint(L, 2);
-  int y = luaL_checkint(L, 3);
+  int x = luaL_checknumber(L, 2);
+  int y = luaL_checknumber(L, 3);
   font_blit(graphics_font, graphics_canvas->data, graphics_canvas->width,
             graphics_canvas->height, str, x, y);
   return 0;

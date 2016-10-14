@@ -99,7 +99,7 @@ int l_mouse_isDown(lua_State *L) {
   int res = 0;
   int i;
   for (i = 1; i <= n; i++) {
-    int idx = luaL_checkinteger(L, i) - 1;
+    int idx = luaL_checknumber(L, i) - 1;
     if (idx >= 0 && idx < MOUSE_BUTTON_MAX) {
       res |= mouse_buttonsDown[idx];
     }
