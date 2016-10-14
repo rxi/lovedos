@@ -13,12 +13,15 @@
 #include <stddef.h>
 
 enum {
-  FILESYSTEM_ESUCCESS   =  0,
-  FILESYSTEM_EFAILURE   = -1,
-  FILESYSTEM_ETOOLONG   = -2,
-  FILESYSTEM_EMOUNTED   = -3,
-  FILESYSTEM_ENOMOUNT   = -4,
-  FILESYSTEM_EMOUNTFAIL = -5
+  FILESYSTEM_ESUCCESS     =  0,
+  FILESYSTEM_EFAILURE     = -1,
+  FILESYSTEM_ETOOLONG     = -2,
+  FILESYSTEM_EMOUNTED     = -3,
+  FILESYSTEM_ENOMOUNT     = -4,
+  FILESYSTEM_EMOUNTFAIL   = -5,
+  FILESYSTEM_ENOWRITEDIR  = -6,
+  FILESYSTEM_EWRITEFAIL   = -7,
+  FILESYSTEM_EMKDIRFAIL   = -8
 };
 
 const char* filesystem_strerror(int err);
@@ -30,5 +33,7 @@ int filesystem_isFile(const char *filename);
 int filesystem_isDirectory(const char *filename);
 void* filesystem_read(const char *filename, int *size);
 void filesystem_free(void *ptr);
+int filesystem_setWriteDir(const char *path);
+int filesystem_write(const char *filename, const void *data, int size);
 
 #endif

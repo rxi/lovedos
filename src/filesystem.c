@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 #include "luaobj.h"
 #include "lib/microtar/microtar.h"
@@ -39,6 +40,7 @@ struct Mount {
 
 int filesystem_mountIdx;
 Mount filesystem_mounts[MAX_MOUNTS];
+char filesystem_writeDir[MAX_PATH];
 
 #define FOREACH_MOUNT(var)\
   for (Mount *var = &filesystem_mounts[filesystem_mountIdx - 1];\
@@ -108,6 +110,36 @@ static void strip_trailing_slash(char *str) {
   if (len > 0 && str[len - 1] == '/') {
     str[len - 1] = '\0';
   }
+}
+
+
+static int is_separator(int chr) {
+  return (chr == '/' || chr == '\\');
+}
+
+
+static int make_dirs(const char *path) {
+  char str[MAX_PATH];
+  char *p = str;
+  int err = concat_path(str, path, "");
+  if (err) {
+    return err;
+  }
+  if (p[0] == '/') p++;
+  if (p[0] && p[1] == ':' && p[2] == '\\') p += 3;
+  while (*p) {
+    if (is_separator(*p)) {
+      *p = '\0';
+      if (get_file_type(str) != FILESYSTEM_TDIR) {
+        if (mkdir(str, S_IRWXU) == -1) {
+          return FILESYSTEM_EMKDIRFAIL;
+        }
+      }
+      *p = '/';
+    }
+    p++;
+  }
+  return FILESYSTEM_ESUCCESS;
 }
 
 
@@ -399,6 +431,9 @@ const char* filesystem_strerror(int err) {
     case FILESYSTEM_EMOUNTED    : return "path already mounted";
     case FILESYSTEM_ENOMOUNT    : return "path is not mounted";
     case FILESYSTEM_EMOUNTFAIL  : return "could not mount path";
+    case FILESYSTEM_ENOWRITEDIR : return "no write directory set";
+    case FILESYSTEM_EWRITEFAIL  : return "could not write file";
+    case FILESYSTEM_EMKDIRFAIL  : return "could not make directory";
   }
   return "unknown error";
 }
@@ -507,6 +542,39 @@ void filesystem_free(void *ptr) {
 }
 
 
+int filesystem_setWriteDir(const char *path) {
+  if (strlen(path) >= MAX_PATH) {
+    return FILESYSTEM_ETOOLONG;
+  }
+  int err = make_dirs(path);
+  if (err) {
+    return err;
+  }
+  strcpy(filesystem_writeDir, path);
+  return FILESYSTEM_ESUCCESS;
+}
+
+
+int filesystem_write(const char *filename, const void *data, int size) {
+  int err, n;
+  char buf[MAX_PATH];
+  if (!*filesystem_writeDir) {
+    return FILESYSTEM_ENOWRITEDIR;
+  }
+  err = concat_path(buf, filesystem_writeDir, filename);
+  if (err) {
+    return err;
+  }
+  FILE *fp = fopen(buf, "wb");
+  if (!fp) {
+    return FILESYSTEM_EWRITEFAIL;
+  }
+  n = fwrite(data, 1, size, fp);
+  fclose(fp);
+  return n == size ? FILESYSTEM_ESUCCESS : FILESYSTEM_EWRITEFAIL;
+}
+
+
 /*==================*/
 /* Lua Binds        */
 /*==================*/
@@ -571,6 +639,32 @@ int l_filesystem_read(lua_State *L) {
 }
 
 
+int l_filesystem_setWriteDir(lua_State *L) {
+  const char *path = luaL_checkstring(L, 1);
+  int err = filesystem_setWriteDir(path);
+  if (err) {
+    lua_pushnil(L);
+    lua_pushstring(L, filesystem_strerror(err));
+    return 2;
+  }
+  lua_pushboolean(L, 1);
+  return 1;
+}
+
+
+int l_filesystem_write(lua_State *L) {
+  size_t sz;
+  const char *filename = luaL_checkstring(L, 1);
+  const char *data = luaL_tolstring(L, 2, &sz);
+  int err = filesystem_write(filename, data, sz);
+  if (err) {
+    luaL_error(L, "%s", filesystem_strerror(err));
+  }
+  lua_pushboolean(L, 1);
+  return 1;
+}
+
+
 int luaopen_filesystem(lua_State *L) {
   luaL_Reg reg[] = {
     { "mount",        l_filesystem_mount        },
@@ -579,6 +673,8 @@ int luaopen_filesystem(lua_State *L) {
     { "isFile",       l_filesystem_isFile       },
     { "isDirectory",  l_filesystem_isDirectory  },
     { "read",         l_filesystem_read         },
+    { "setWriteDir",  l_filesystem_setWriteDir  },
+    { "write",        l_filesystem_write        },
     { 0, 0 },
   };
   luaL_newlib(L, reg);

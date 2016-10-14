@@ -21,6 +21,10 @@ function love.boot()
     end
   end
 
+  -- Set write directory and mount
+  love.filesystem.setWriteDir("save")
+  love.filesystem.mount("save")
+
   -- Load main.lua or init `nogame` state
   if love.filesystem.isFile("main.lua") then
     require("main")
