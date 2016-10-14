@@ -112,7 +112,7 @@ static void write_dir(mtar_t *tar, const char *indir, const char *outdir) {
     memset(&h, 0, sizeof(h));
     concat(h.name, sizeof(h.name), outdir, NULL);
     h.type = MTAR_TDIR;
-    h.mode = 0664;
+    h.mode = 0775;
     mtar_write_header(tar, &h);
   }
 
