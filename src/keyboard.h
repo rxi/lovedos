@@ -17,8 +17,8 @@ typedef struct {
 } keyboard_Event;
 
 enum {
-  KEYBOARD_KEYPRESS,
-  KEYBOARD_KEYRELEASE,
+  KEYBOARD_PRESSED,
+  KEYBOARD_RELEASED,
   KEYBOARD_TEXTINPUT
 };
 

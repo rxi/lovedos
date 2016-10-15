@@ -36,15 +36,15 @@ int l_keyboard_poll(lua_State *L) {
 
   while (keyboard_poll(&e)) {
 
-    if (e.type == KEYBOARD_KEYPRESS || e.type == KEYBOARD_KEYRELEASE) {
+    if (e.type == KEYBOARD_PRESSED || e.type == KEYBOARD_RELEASED) {
       lua_newtable(L);
-      lua_pushstring(L, e.type == KEYBOARD_KEYPRESS ? "down" : "up");
+      lua_pushstring(L, e.type == KEYBOARD_PRESSED ? "down" : "up");
       lua_setfield(L, -2, "type");
       lua_pushnumber(L, e.code);
       lua_setfield(L, -2, "code");
       lua_pushstring(L, e.key);
       lua_setfield(L, -2, "key");
-      if (e.type == KEYBOARD_KEYPRESS) {
+      if (e.type == KEYBOARD_PRESSED) {
         lua_pushboolean(L, e.isrepeat);
         lua_setfield(L, -2, "isrepeat");
       }

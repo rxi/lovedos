@@ -175,7 +175,7 @@ void keyboard_handler() {
       code &= ~(1 << 7);
       keyboard_keyStates[code] = 0;
       e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-      e->type = KEYBOARD_KEYRELEASE;
+      e->type = KEYBOARD_RELEASED;
       e->code = code;
       e->isrepeat = 0;
       keyboard_events.writei++;
@@ -186,7 +186,7 @@ void keyboard_handler() {
       if (!isrepeat || keyboard_allowKeyRepeat) {
         keyboard_keyStates[code] = 1;
         e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-        e->type = KEYBOARD_KEYPRESS;
+        e->type = KEYBOARD_PRESSED;
         e->code = code;
         e->isrepeat = isrepeat;
         keyboard_events.writei++;
