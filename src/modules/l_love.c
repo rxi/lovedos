@@ -20,6 +20,7 @@ int luaopen_image(lua_State *L);
 int luaopen_quad(lua_State *L);
 int luaopen_font(lua_State *L);
 int luaopen_system(lua_State *L);
+int luaopen_event(lua_State *L);
 int luaopen_filesystem(lua_State *L);
 int luaopen_graphics(lua_State *L);
 int luaopen_timer(lua_State *L);
@@ -52,6 +53,7 @@ int luaopen_love(lua_State *L) {
   /* Init submodules */
   struct { char *name; int (*fn)(lua_State *L); } mods[] = {
     { "system",     luaopen_system      },
+    { "event",      luaopen_event       },
     { "filesystem", luaopen_filesystem  },
     { "graphics",   luaopen_graphics    },
     { "timer",      luaopen_timer       },

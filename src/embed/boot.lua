@@ -13,6 +13,23 @@ function love.boot()
     end
   end)
 
+  -- Init event handlers table
+  local t = {
+    "mousepressed",
+    "mousereleased",
+    "mousemoved",
+    "keypressed",
+    "keyreleased",
+    "textinput",
+  }
+  love.handlers = {}
+  for i, name in ipairs(t) do
+    love.handlers[name] = function(...)
+      local fn = love[name]
+      if fn then fn(...) end
+    end
+  end
+
   -- Try to mount .exe file, then the first argument
   for i, v in ipairs { love.argv[1], love.argv[2] } do
     local mounted = love.filesystem.mount(v)
@@ -48,25 +65,13 @@ function love.run()
   love.timer.step()
 
   while true do
-    -- Handle mouse events
-    for _, e in ipairs(love.mouse.poll()) do
-      if e.type == "motion" then
-        if love.mousemoved then love.mousemoved(e.x, e.y, e.dx, e.dy) end
-      elseif e.type == "pressed" then
-        if love.mousepressed then love.mousepressed(e.x, e.y, e.button) end
-      elseif e.type == "released" then
-        if love.mousereleased then love.mousereleased(e.x, e.y, e.button) end
+    -- Handle events
+    while 1 do
+      local name, a,b,c,d = love.event.poll()
+      if not name then
+        break
       end
-    end
-    -- Handle keyboard events
-    for _, e in ipairs(love.keyboard.poll()) do
-      if e.type == "down" then
-        if love.keypressed then love.keypressed(e.key, e.code, e.isrepeat) end
-      elseif e.type == "up" then
-        if love.keyreleased then love.keyreleased(e.key, e.code) end
-      elseif e.type == "text" then
-        if love.textinput then love.textinput(e.text) end
-      end
+      love.handlers[name](a, b, c, d)
     end
     -- Update
     love.timer.step()

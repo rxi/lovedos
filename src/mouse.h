@@ -5,20 +5,27 @@ enum {
   MOUSE_BUTTON_LEFT,
   MOUSE_BUTTON_RIGHT,
   MOUSE_BUTTON_MIDDLE,
-  MOUSE_BUTTON_MAX,
+  MOUSE_BUTTON_MAX
+};
+
+enum {
+  MOUSE_PRESSED,
+  MOUSE_RELEASED,
+  MOUSE_MOVED
 };
 
 typedef struct {
-  int inited;
+  int type;
   int x, y;
-  int lastX, lastY;
-  int buttonsPressed[MOUSE_BUTTON_MAX];
-  int buttonsReleased[MOUSE_BUTTON_MAX];
-  int buttonsDown[MOUSE_BUTTON_MAX];
-} mouse_State;
+  int dx, dy;
+  int button;
+} mouse_Event;
+
 
 void mouse_init(void);
-void mouse_update(void);
-mouse_State* mouse_getState(void);
+int mouse_poll(mouse_Event *e);
+int mouse_isDown(int button);
+int mouse_getX(void);
+int mouse_getY(void);
 
 #endif
