@@ -17,81 +17,7 @@
 #define BUFFER_SIZE 32
 #define BUFFER_MASK (BUFFER_SIZE - 1)
 
-enum { KEY_UP, KEY_DOWN };
-
-typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
-
-volatile int keyboard_allowKeyRepeat = 0;
-volatile char keyboard_keyStates[KEY_MAX];
-
-volatile struct {
-  KeyEvent data[32];
-  int readi, writei;
-} keyboard_events;
-
-_go32_dpmi_seginfo old_keyb_handler_seginfo, new_keyb_handler_seginfo;
-
-
-void keyboard_handler() {
-  static unsigned char code;
-  code = inportb(0x60);
-
-  if (code != 224) {
-    volatile KeyEvent *e;
-    /* Handle key up / down */
-    if (code & (1 << 7)) {
-      /* Key up */
-      code &= ~(1 << 7);
-      keyboard_keyStates[code] = 0;
-      e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-      e->code = code;
-      e->type = KEY_UP;
-      e->isrepeat = 0;
-      keyboard_events.writei++;
-
-    } else {
-      /* Key down */
-      int isrepeat = keyboard_keyStates[code];
-      if (!isrepeat || keyboard_allowKeyRepeat) {
-        keyboard_keyStates[code] = 1;
-        e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-        e->code = code;
-        e->type = KEY_DOWN;
-        e->isrepeat = isrepeat;
-        keyboard_events.writei++;
-      }
-    }
-  }
-
-  outportb(0x20, 0x20);
-}
-
-
-void keyboard_handler_end() {}
-
-
-int keyboard_init(void) {
-  _go32_dpmi_lock_data((char*)&keyboard_keyStates, KEY_MAX);
-  _go32_dpmi_lock_data((char*)&keyboard_events, sizeof(keyboard_events));
-  _go32_dpmi_lock_code(keyboard_handler,(unsigned long)keyboard_handler_end -
-                       (unsigned long)keyboard_handler);
-  _go32_dpmi_get_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
-  new_keyb_handler_seginfo.pm_offset = (int)keyboard_handler;
-  _go32_dpmi_chain_protected_mode_interrupt_vector(9, &new_keyb_handler_seginfo);
-  return 0;
-}
-
-
-void keyboard_deinit(void) {
-  _go32_dpmi_set_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
-}
-
-
-/**
- * Lua binds
- */
-
-const char *scancodeMap[] = {
+static const char *scancodeMap[] = {
   [  0] = "?",
   [  1] = "escape",
   [  2] = "1",
@@ -224,48 +150,101 @@ const char *scancodeMap[] = {
 };
 
 
-int l_keyboard_setKeyRepeat(lua_State *L) {
-  keyboard_allowKeyRepeat = lua_toboolean(L, 1);
+volatile int keyboard_allowKeyRepeat = 0;
+volatile char keyboard_keyStates[KEY_MAX];
+
+typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
+
+volatile struct {
+  KeyEvent data[32];
+  int readi, writei;
+} keyboard_events;
+
+_go32_dpmi_seginfo old_keyb_handler_seginfo, new_keyb_handler_seginfo;
+
+
+void keyboard_handler() {
+  static unsigned char code;
+  code = inportb(0x60);
+
+  if (code != 224) {
+    volatile KeyEvent *e;
+    /* Handle key up / down */
+    if (code & (1 << 7)) {
+      /* Key up */
+      code &= ~(1 << 7);
+      keyboard_keyStates[code] = 0;
+      e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
+      e->type = KEYBOARD_KEYRELEASE;
+      e->code = code;
+      e->isrepeat = 0;
+      keyboard_events.writei++;
+
+    } else {
+      /* Key down */
+      int isrepeat = keyboard_keyStates[code];
+      if (!isrepeat || keyboard_allowKeyRepeat) {
+        keyboard_keyStates[code] = 1;
+        e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
+        e->type = KEYBOARD_KEYPRESS;
+        e->code = code;
+        e->isrepeat = isrepeat;
+        keyboard_events.writei++;
+      }
+    }
+  }
+
+  outportb(0x20, 0x20);
+}
+
+
+void keyboard_handler_end() {}
+
+
+int keyboard_init(void) {
+  _go32_dpmi_lock_data((char*)&keyboard_keyStates, KEY_MAX);
+  _go32_dpmi_lock_data((char*)&keyboard_events, sizeof(keyboard_events));
+  _go32_dpmi_lock_code(keyboard_handler,(unsigned long)keyboard_handler_end -
+                       (unsigned long)keyboard_handler);
+  _go32_dpmi_get_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
+  new_keyb_handler_seginfo.pm_offset = (int)keyboard_handler;
+  _go32_dpmi_chain_protected_mode_interrupt_vector(9, &new_keyb_handler_seginfo);
   return 0;
 }
 
 
-int l_keyboard_isDown(lua_State *L) {
-  int n = lua_gettop(L);
-  int res = 0;
-  int i;
-  for (i = 1; i <= n; i++) {
-    int code = luaL_checkoption(L, 1, NULL, scancodeMap);
-    res |= keyboard_keyStates[code];
-  }
-  lua_pushboolean(L, res);
-  return 1;
+void keyboard_deinit(void) {
+  _go32_dpmi_set_protected_mode_interrupt_vector(9, &old_keyb_handler_seginfo);
 }
 
 
-int l_keyboard_poll(lua_State *L) {
-  lua_newtable(L);
-  int idx = 1;
+void keyboard_setKeyRepeat(int allow) {
+  keyboard_allowKeyRepeat = allow;
+}
 
-  /* Handle key presses / releases */
-  while (keyboard_events.readi != keyboard_events.writei) {
-    lua_newtable(L);
 
-    KeyEvent e = keyboard_events.data[keyboard_events.readi & BUFFER_MASK];
-
-    lua_pushstring(L, e.type == KEY_DOWN ? "down" : "up");
-    lua_setfield(L, -2, "type");
-    lua_pushnumber(L, e.code);
-    lua_setfield(L, -2, "code");
-    lua_pushstring(L, scancodeMap[e.code]);
-    lua_setfield(L, -2, "key");
-    if (e.type == KEY_DOWN) {
-      lua_pushboolean(L, e.isrepeat);
-      lua_setfield(L, -2, "isrepeat");
+int keyboard_isDown(const char *key) {
+  int i;
+  for (i = 0; scancodeMap[i]; i++) {
+    if (!strcmp(scancodeMap[i], key)) {
+      return keyboard_keyStates[i];
     }
+  }
+  return 0;
+}
 
-    lua_rawseti(L, -2, idx++);
+
+int keyboard_poll(keyboard_Event *e) {
+
+  /* Handle key press / release */
+  if (keyboard_events.readi != keyboard_events.writei) {
+    KeyEvent ke = keyboard_events.data[keyboard_events.readi & BUFFER_MASK];
+    e->type = ke.type;
+    e->code = ke.code;
+    e->key = scancodeMap[ke.code];
+    e->isrepeat = ke.isrepeat;
     keyboard_events.readi++;
+    return 1;
   }
 
   /* Handle text input */
@@ -280,25 +259,11 @@ int l_keyboard_poll(lua_State *L) {
     }
   }
   if (i > 0) {
-    lua_newtable(L);
-    lua_pushstring(L, "text");
-    lua_setfield(L, -2, "type");
-    lua_pushlstring(L, buf, i);
-    lua_setfield(L, -2, "text");
-    lua_rawseti(L, -2, idx++);
+    e->type = KEYBOARD_TEXTINPUT;
+    memcpy(e->text, buf, i);
+    e->text[i] = '\0';
+    return 1;
   }
 
-  return 1;
-}
-
-
-int luaopen_keyboard(lua_State *L) {
-  luaL_Reg reg[] = {
-    { "poll",         l_keyboard_poll         },
-    { "setKeyRepeat", l_keyboard_setKeyRepeat },
-    { "isDown",       l_keyboard_isDown       },
-    { 0, 0 },
-  };
-  luaL_newlib(L, reg);
-  return 1;
+  return 0;
 }
