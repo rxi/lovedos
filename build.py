@@ -11,7 +11,7 @@ TEMPSRC_DIR = ".tempsrc"
 CFLAGS    = [ "-O2", "-Wall", "-s", "-Wno-misleading-indentation" ]
 DLIBS     = [ "m" ]
 DEFINES   = [ "DMT_ABORT_NULL", "LUA_COMPAT_ALL" ]
-INCLUDES  = [ TEMPSRC_DIR ]
+INCLUDES  = [ "src", TEMPSRC_DIR ]
 
 
 def fmt(fmt, var):
