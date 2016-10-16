@@ -105,11 +105,13 @@ function love.errhand(msg)
 
   -- Do error main loop
   while true do
-    for _, e in ipairs(love.keyboard.poll()) do
-      if e.type == "down" and e.code == 1 then
-        os.exit()
+    love.event.pump()
+    repeat
+      local name, a = love.event.poll()
+      if name == "keypressed" and a == "escape" then
+        return
       end
-    end
+    until not name
     love.graphics.clear()
     love.graphics.print(str, 6, 6)
     love.graphics.present()
