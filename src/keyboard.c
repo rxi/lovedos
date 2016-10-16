@@ -12,6 +12,7 @@
 #include <dpmi.h>
 #include "luaobj.h"
 #include "keyboard.h"
+#include "event.h"
 
 #define KEY_MAX 128
 #define BUFFER_SIZE 32
@@ -153,6 +154,7 @@ static const char *scancodeMap[] = {
 volatile int keyboard_allowKeyRepeat = 0;
 volatile char keyboard_keyStates[KEY_MAX];
 
+enum { KEYPRESSED, KEYRELEASED };
 typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
 
 volatile struct {
@@ -175,7 +177,7 @@ void keyboard_handler() {
       code &= ~(1 << 7);
       keyboard_keyStates[code] = 0;
       e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-      e->type = KEYBOARD_RELEASED;
+      e->type = KEYRELEASED;
       e->code = code;
       e->isrepeat = 0;
       keyboard_events.writei++;
@@ -186,7 +188,7 @@ void keyboard_handler() {
       if (!isrepeat || keyboard_allowKeyRepeat) {
         keyboard_keyStates[code] = 1;
         e = &keyboard_events.data[keyboard_events.writei & BUFFER_MASK];
-        e->type = KEYBOARD_PRESSED;
+        e->type = KEYPRESSED;
         e->code = code;
         e->isrepeat = isrepeat;
         keyboard_events.writei++;
@@ -234,17 +236,19 @@ int keyboard_isDown(const char *key) {
 }
 
 
-int keyboard_poll(keyboard_Event *e) {
-
+void keyboard_update(void) {
   /* Handle key press / release */
-  if (keyboard_events.readi != keyboard_events.writei) {
-    KeyEvent ke = keyboard_events.data[keyboard_events.readi & BUFFER_MASK];
-    e->type = ke.type;
-    e->code = ke.code;
-    e->key = scancodeMap[ke.code];
-    e->isrepeat = ke.isrepeat;
-    keyboard_events.readi++;
-    return 1;
+  while (keyboard_events.readi != keyboard_events.writei) {
+    KeyEvent ke = keyboard_events.data[keyboard_events.readi++ & BUFFER_MASK];
+    event_t e;
+    if (ke.type == KEYPRESSED) {
+      e.type = EVENT_KEYBOARD_PRESSED;
+    } else {
+      e.type = EVENT_KEYBOARD_RELEASED;
+    }
+    e.keyboard.key = scancodeMap[ke.code];
+    e.keyboard.isrepeat = ke.isrepeat;
+    event_push(&e);
   }
 
   /* Handle text input */
@@ -259,11 +263,9 @@ int keyboard_poll(keyboard_Event *e) {
     }
   }
   if (i > 0) {
-    e->type = KEYBOARD_TEXTINPUT;
-    memcpy(e->text, buf, i);
-    e->text[i] = '\0';
-    return 1;
+    event_t e;
+    e.type = EVENT_KEYBOARD_TEXTINPUT;
+    memcpy(e.keyboard.text, buf, i);
+    e.keyboard.text[i] = '\0';
   }
-
-  return 0;
 }

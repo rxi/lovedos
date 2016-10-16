@@ -9,6 +9,12 @@
 #include "event.h"
 
 
+int l_event_pump(lua_State *L) {
+  event_pump();
+  return 0;
+}
+
+
 int l_event_poll(lua_State *L) {
   event_t e;
   if (event_poll(&e)) {
@@ -48,6 +54,7 @@ int l_event_poll(lua_State *L) {
 
 int luaopen_event(lua_State *L) {
   luaL_Reg reg[] = {
+    { "pump",  l_event_pump  },
     { "poll",  l_event_poll  },
     { 0, 0 },
   };

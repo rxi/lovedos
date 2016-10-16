@@ -8,22 +8,9 @@ enum {
   MOUSE_BUTTON_MAX
 };
 
-enum {
-  MOUSE_PRESSED,
-  MOUSE_RELEASED,
-  MOUSE_MOVED
-};
-
-typedef struct {
-  int type;
-  int x, y;
-  int dx, dy;
-  int button;
-} mouse_Event;
-
 
 void mouse_init(void);
-int mouse_poll(mouse_Event *e);
+void mouse_update(void);
 int mouse_isDown(int button);
 int mouse_getX(void);
 int mouse_getY(void);

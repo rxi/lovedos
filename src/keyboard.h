@@ -8,24 +8,10 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-typedef struct {
-  int type;
-  unsigned code;
-  const char *key;
-  char text[64];
-  int isrepeat;
-} keyboard_Event;
-
-enum {
-  KEYBOARD_PRESSED,
-  KEYBOARD_RELEASED,
-  KEYBOARD_TEXTINPUT
-};
-
 int keyboard_init(void);
 void keyboard_deinit(void);
 void keyboard_setKeyRepeat(int allow);
 int keyboard_isDown(const char *key);
-int keyboard_poll(keyboard_Event *e);
+void keyboard_update(void);
 
 #endif

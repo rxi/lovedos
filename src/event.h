@@ -39,6 +39,8 @@ typedef union {
 
 
 const char* event_typestr(int type);
+void event_push(event_t *e);
+void event_pump(void);
 int event_poll(event_t *e);
 
 #endif

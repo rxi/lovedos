@@ -10,19 +10,12 @@
 #include <dos.h>
 #include "luaobj.h"
 #include "mouse.h"
-
-#define BUFFER_SIZE 32
-#define BUFFER_MASK (BUFFER_SIZE - 1)
+#include "event.h"
 
 int mouse_inited;
 int mouse_x, mouse_y;
 int mouse_lastX, mouse_lastY;
 int mouse_buttonStates[MOUSE_BUTTON_MAX];
-
-struct {
-  mouse_Event data[BUFFER_SIZE];
-  int writei, readi;
-} mouse_events;
 
 
 void mouse_init(void) {
@@ -46,13 +39,13 @@ void mouse_update(void) {
 
   /* Do moved event if mouse moved */
   if (mouse_x != mouse_lastX || mouse_y != mouse_lastY) {
-    mouse_Event e;
-    e.type = MOUSE_MOVED;
-    e.x = mouse_x;
-    e.y = mouse_y;
-    e.dx = mouse_x - mouse_lastX;
-    e.dy = mouse_y - mouse_lastY;
-    mouse_events.data[mouse_events.writei++ & BUFFER_MASK] = e;
+    event_t e;
+    e.type = EVENT_MOUSE_MOVED;
+    e.mouse.x = mouse_x;
+    e.mouse.y = mouse_y;
+    e.mouse.dx = mouse_x - mouse_lastX;
+    e.mouse.dy = mouse_y - mouse_lastY;
+    event_push(&e);
   }
 
   /* Update last position */
@@ -69,12 +62,12 @@ void mouse_update(void) {
       int86(0x33, &regs, &regs);
       if (regs.x.bx) {
         /* Push event */
-        mouse_Event e;
-        e.type = t == 0 ? MOUSE_PRESSED : MOUSE_RELEASED;
-        e.button = i;
-        e.x = mouse_x;
-        e.y = mouse_y;
-        mouse_events.data[mouse_events.writei++ & BUFFER_MASK] = e;
+        event_t e;
+        e.type = t == 0 ? EVENT_MOUSE_PRESSED : EVENT_MOUSE_RELEASED;
+        e.mouse.button = i;
+        e.mouse.x = mouse_x;
+        e.mouse.y = mouse_y;
+        event_push(&e);
         /* Set state */
         mouse_buttonStates[i] = t == 0 ? 1 : 0;
       }
@@ -82,24 +75,6 @@ void mouse_update(void) {
   }
 }
 
-
-int mouse_poll(mouse_Event *e) {
-retry:
-  /* Event in event buffer? Store and return */
-  if (mouse_events.readi != mouse_events.writei) {
-    *e = mouse_events.data[mouse_events.readi++ & BUFFER_MASK];
-    return 1;
-  }
-
-  /* No events in buffer -- update; return `0` if no new events were pushed by
-   * the update */
-  mouse_update();
-  if (mouse_events.readi != mouse_events.writei) {
-    goto retry;
-  }
-
-  return 0;
-}
 
 
 int mouse_isDown(int button) {

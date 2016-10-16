@@ -66,6 +66,7 @@ function love.run()
 
   while true do
     -- Handle events
+    love.event.pump()
     while 1 do
       local name, a,b,c,d = love.event.poll()
       if not name then
