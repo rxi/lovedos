@@ -21,6 +21,10 @@ int l_event_poll(lua_State *L) {
     lua_pushstring(L, event_typestr(e.type));
 
     switch(e.type) {
+      case EVENT_QUIT:
+        lua_pushnumber(L, e.quit.status);
+        return 2;
+
       case EVENT_KEYBOARD_PRESSED:
       case EVENT_KEYBOARD_RELEASED:
         lua_pushstring(L, e.keyboard.key);
@@ -46,16 +50,30 @@ int l_event_poll(lua_State *L) {
         lua_pushnumber(L, e.mouse.button);
         return 4;
     }
+
+    return 1;
   }
 
   return 0;
 }
 
 
+int l_event_quit(lua_State *L) {
+  int status = luaL_optnumber(L, 1, 0);
+  event_t e;
+  e.type = EVENT_QUIT;
+  e.quit.status = status;
+  event_push(&e);
+  return 0;
+}
+
+
+
 int luaopen_event(lua_State *L) {
   luaL_Reg reg[] = {
     { "pump",  l_event_pump  },
     { "poll",  l_event_poll  },
+    { "quit",  l_event_quit  },
     { 0, 0 },
   };
   luaL_newlib(L, reg);

@@ -14,21 +14,20 @@ function love.boot()
   end)
 
   -- Init event handlers table
-  local t = {
-    "mousepressed",
-    "mousereleased",
-    "mousemoved",
-    "keypressed",
-    "keyreleased",
-    "textinput",
-  }
-  love.handlers = {}
-  for i, name in ipairs(t) do
-    love.handlers[name] = function(...)
-      local fn = love[name]
-      if fn then fn(...) end
+  local function makewrapper(name)
+    return function(...)
+      if love[name] then return love[name](...) end
     end
   end
+  love.handlers = {
+    ["quit"] = function() end,
+    ["mousepressed"] = makewrapper("mousepressed"),
+    ["mousereleased"] = makewrapper("mousereleased"),
+    ["mousemoved"] = makewrapper("mousemoved"),
+    ["keypressed"] = makewrapper("keypressed"),
+    ["keyreleased"] = makewrapper("keyreleased"),
+    ["textinput"] = makewrapper("textinput"),
+   }
 
   -- Try to mount .exe file, then the first argument
   for i, v in ipairs { love.argv[1], love.argv[2] } do
@@ -71,6 +70,11 @@ function love.run()
       local name, a,b,c,d = love.event.poll()
       if not name then
         break
+      end
+      if name == "quit" then
+        if not love.quit or not love.quit() then
+          os.exit(a)
+        end
       end
       love.handlers[name](a, b, c, d)
     end

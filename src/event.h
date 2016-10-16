@@ -10,6 +10,7 @@
 
 enum {
   EVENT_NULL,
+  EVENT_QUIT,
   EVENT_KEYBOARD_PRESSED,
   EVENT_KEYBOARD_RELEASED,
   EVENT_KEYBOARD_TEXTINPUT,
@@ -20,6 +21,11 @@ enum {
 
 typedef union {
   int type;
+
+  struct {
+    int type;
+    int status;
+  } quit;
 
   struct {
     int type;

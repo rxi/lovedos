@@ -22,6 +22,7 @@ static struct {
 
 const char* event_typestr(int type) {
   switch (type) {
+    case EVENT_QUIT               : return "quit";
     case EVENT_KEYBOARD_PRESSED   : return "keypressed";
     case EVENT_KEYBOARD_RELEASED  : return "keyreleased";
     case EVENT_KEYBOARD_TEXTINPUT : return "textinput";
