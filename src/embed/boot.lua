@@ -37,9 +37,22 @@ function love.boot()
     end
   end
 
-  -- Set write directory and mount
-  love.filesystem.setWriteDir("save")
-  love.filesystem.mount("save")
+  -- Init the save directory - if it doesn't exist (can't be mounted)
+  -- love.filesystem.write() is wrapped so that it is only set, created and
+  -- mounted when write() is called
+  local savedir = "save"
+  local mounted = love.filesystem.mount(savedir)
+  if mounted then
+    love.filesystem.setWriteDir(savedir)
+  else
+    local old = love.filesystem.write
+    love.filesystem.write = function(...)
+      love.filesystem.setWriteDir(savedir)
+      love.filesystem.mount(savedir)
+      love.filesystem.write = old
+      return old(...)
+    end
+  end
 
   -- Load main.lua or init `nogame` state
   if love.filesystem.isFile("main.lua") then
