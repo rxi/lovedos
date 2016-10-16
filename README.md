@@ -42,9 +42,7 @@ packaging your game for distribution.
 
 ## Building
 Instructions for building the project from source can be found in the
-[doc/building.md](doc/building.md) file. If you intend to make changes to the
-project then an overview of each source file's content can be found in
-[doc/files.md](doc/files.md).
+[doc/building.md](doc/building.md) file.
 
 
 ## License
