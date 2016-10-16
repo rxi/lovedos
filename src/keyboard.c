@@ -159,7 +159,7 @@ typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
 
 volatile struct {
   KeyEvent data[32];
-  int readi, writei;
+  unsigned readi, writei;
 } keyboard_events;
 
 _go32_dpmi_seginfo old_keyb_handler_seginfo, new_keyb_handler_seginfo;

@@ -16,7 +16,7 @@
 
 static struct {
   event_t buffer[BUFFER_SIZE];
-  int writei, readi;
+  unsigned writei, readi;
 } events;
 
 
