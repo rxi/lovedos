@@ -267,5 +267,6 @@ void keyboard_update(void) {
     e.type = EVENT_KEYBOARD_TEXTINPUT;
     memcpy(e.keyboard.text, buf, i);
     e.keyboard.text[i] = '\0';
+    event_push(&e);
   }
 }
