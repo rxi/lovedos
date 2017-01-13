@@ -1,9 +1,8 @@
 
-
 function love.nogame()
 
   function love.load()
-    love.graphics.setBackgroundColor(228, 65, 68)
+    love.graphics.setBackgroundColor(0, 138, 225)
   end
 
   function love.keypressed(key)
@@ -18,23 +17,12 @@ function love.nogame()
     love.graphics.print(str, (screenw - font:getWidth(str)) / 2, y)
   end
 
-  local function drawLines(ycenter, width, height)
-    local screenw = love.graphics.getWidth()
-    local n = 26
-    for i = 0, n - 1 do
-      local h = height * math.cos(i * 0.3 + love.timer.getTime() * 3) / 2
-      local x = (screenw - width) / 2 + (i / (n - 1)) * width
-      love.graphics.line(x, ycenter, x, ycenter + h)
-    end
-  end
-
   function love.draw()
     love.graphics.setColor(255, 255, 255)
-    drawText("LoveDOS " .. love.getVersion(), 62)
-    drawLines(100, 120, 30)
-    drawText("No game", 128)
-    love.graphics.setColor(243, 150, 152)
-    drawText("Press [ESCAPE] to quit", 184)
+    drawText("LoveDOS " .. love.getVersion(), 90)
+    drawText("No game", 102)
+    love.graphics.setColor(95, 181, 255)
+    drawText("Press ESCAPE to quit", 186)
   end
 
 end
