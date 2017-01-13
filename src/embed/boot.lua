@@ -1,4 +1,9 @@
-
+--
+-- Copyright (c) 2017 rxi
+--
+-- This library is free software; you can redistribute it and/or modify it
+-- under the terms of the MIT license. See LICENSE for details.
+--
 
 function love.boot()
   -- Init package.path and add filesystem-compatible package loader
