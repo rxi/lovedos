@@ -287,12 +287,12 @@ place in this function.
 
 ##### love.keypressed(key, code, isrepeat)
 Called when the user presses a key. `key` is the key that was pressed, `code` is
-the raw integer scancode value for the pressed key, `isrepeat` is true if
-this key press event is a repeat.
+the scancode of the pressed key, `isrepeat` is true if this key press event is a
+repeat.
 
 ##### love.keyreleased(key, code)
 Called when the user releases a key. `key` is the key that was released, `code`
-is the raw integer scancode value for the released key.
+is the scancode for the released key.
 
 ##### love.textinput(text)
 Called when text has been entered by the user. For example if shift-2 is pressed
