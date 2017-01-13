@@ -155,10 +155,10 @@ volatile int keyboard_allowKeyRepeat = 0;
 volatile char keyboard_keyStates[KEY_MAX];
 
 enum { KEYPRESSED, KEYRELEASED };
-typedef struct { unsigned char type, code, isrepeat; } KeyEvent;
+typedef struct { unsigned char type, code, isrepeat; } key_event_t;
 
 volatile struct {
-  KeyEvent data[32];
+  key_event_t data[32];
   unsigned readi, writei;
 } keyboard_events;
 
@@ -170,7 +170,7 @@ void keyboard_handler() {
   code = inportb(0x60);
 
   if (code != 224) {
-    volatile KeyEvent *e;
+    volatile key_event_t *e;
     /* Handle key up / down */
     if (code & (1 << 7)) {
       /* Key up */
@@ -239,7 +239,7 @@ int keyboard_isDown(const char *key) {
 void keyboard_update(void) {
   /* Handle key press / release */
   while (keyboard_events.readi != keyboard_events.writei) {
-    KeyEvent ke = keyboard_events.data[keyboard_events.readi++ & BUFFER_MASK];
+    key_event_t ke = keyboard_events.data[keyboard_events.readi++ & BUFFER_MASK];
     event_t e;
     if (ke.type == KEYPRESSED) {
       e.type = EVENT_KEYBOARD_PRESSED;
