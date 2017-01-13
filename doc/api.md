@@ -8,6 +8,7 @@
 * [love.keyboard](#lovekeyboard)
 * [love.mouse](#lovemouse)
 * [love.filesystem](#lovefilesystem)
+* [love.event](#loveevent)
 
 ##### [Objects](#objects-1)
 * [Image](#image)
@@ -216,6 +217,11 @@ Reads and returns the contents of the file at `filename`.
 
 ##### love.filesystem.write(filename, string)
 Writes `string` to the given `filename` in the game's save directory.
+
+
+### love.event
+##### love.event.quit([status])
+Pushes the `quit` event with the given `status`. `status` is `0` by default.
 
 
 ## Objects
