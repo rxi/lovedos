@@ -25,24 +25,24 @@ enum {
   FILESYSTEM_TDIR,
 };
 
-typedef struct Mount Mount;
+typedef struct mount_t mount_t;
 
-struct Mount {
-  void (*unmount)(Mount *mnt);
-  int (*exists)(Mount *mnt, const char *filename);
-  int (*isFile)(Mount *mnt, const char *filename);
-  int (*isDirectory)(Mount *mnt, const char *filename);
-  void *(*read)(Mount *mnt, const char *filename, int *size);
+struct mount_t {
+  void (*unmount)(mount_t *mnt);
+  int (*exists)(mount_t *mnt, const char *filename);
+  int (*isFile)(mount_t *mnt, const char *filename);
+  int (*isDirectory)(mount_t *mnt, const char *filename);
+  void *(*read)(mount_t *mnt, const char *filename, int *size);
   void *udata;
   char path[MAX_PATH];
 };
 
 int filesystem_mountIdx;
-Mount filesystem_mounts[MAX_MOUNTS];
+mount_t filesystem_mounts[MAX_MOUNTS];
 char filesystem_writeDir[MAX_PATH];
 
 #define FOREACH_MOUNT(var)\
-  for (Mount *var = &filesystem_mounts[filesystem_mountIdx - 1];\
+  for (mount_t *var = &filesystem_mounts[filesystem_mountIdx - 1];\
        var >= filesystem_mounts;\
        var--)
 
@@ -143,30 +143,30 @@ static int make_dirs(const char *path) {
 
 
 /*==================*/
-/* Directory Mount  */
+/* Directory mount_t  */
 /*==================*/
 
-static void dir_unmount(Mount *mnt) {
+static void dir_unmount(mount_t *mnt) {
   /* Intentionally empty */
 }
 
 
-static int dir_exists(Mount *mnt, const char *filename) {
+static int dir_exists(mount_t *mnt, const char *filename) {
   return concat_and_get_file_type(mnt->path, filename) != FILESYSTEM_TNONE;
 }
 
 
-static int dir_isFile(Mount *mnt, const char *filename) {
+static int dir_isFile(mount_t *mnt, const char *filename) {
   return concat_and_get_file_type(mnt->path, filename) == FILESYSTEM_TREG;
 }
 
 
-static int dir_isDirectory(Mount *mnt, const char *filename) {
+static int dir_isDirectory(mount_t *mnt, const char *filename) {
   return concat_and_get_file_type(mnt->path, filename) == FILESYSTEM_TDIR;
 }
 
 
-static void* dir_read(Mount *mnt, const char *filename, int *size) {
+static void* dir_read(mount_t *mnt, const char *filename, int *size) {
   char buf[MAX_PATH];
   /* Make fullpath */
   int err = concat_path(buf, mnt->path, filename);
@@ -194,7 +194,7 @@ static void* dir_read(Mount *mnt, const char *filename, int *size) {
 }
 
 
-static int dir_mount(Mount *mnt, const char *path) {
+static int dir_mount(mount_t *mnt, const char *path) {
   /* Check the path is actually a directory */
   if ( get_file_type(path) != FILESYSTEM_TDIR ) {
     return FILESYSTEM_EFAILURE;
@@ -214,24 +214,24 @@ static int dir_mount(Mount *mnt, const char *path) {
 
 
 /*==================*/
-/* Tar Mount        */
+/* Tar mount_t        */
 /*==================*/
 
-typedef struct { unsigned hash, pos; } TarFileRef;
+typedef struct { unsigned hash, pos; } tar_file_ref_t;
 
 typedef struct {
   mtar_t tar;
   FILE *fp;
   int offset;
-  TarFileRef *map;
+  tar_file_ref_t *map;
   int nfiles;
-} TarMount;
+} tar_mount_t;
 
 
-static int tar_find(Mount *mnt, const char *filename, mtar_header_t *h) {
+static int tar_find(mount_t *mnt, const char *filename, mtar_header_t *h) {
   /* Hash filename and linear search map for matching hash, read header and
    * check against filename if the hashes match */
-  TarMount *tm = mnt->udata;
+  tar_mount_t *tm = mnt->udata;
   unsigned hash = hash_string(filename);
   int i;
   for (i = 0; i < tm->nfiles; i++) {
@@ -252,21 +252,21 @@ static int tar_find(Mount *mnt, const char *filename, mtar_header_t *h) {
 }
 
 
-static void tar_unmount(Mount *mnt) {
-  TarMount *tm = mnt->udata;
+static void tar_unmount(mount_t *mnt) {
+  tar_mount_t *tm = mnt->udata;
   mtar_close(&tm->tar);
   dmt_free(tm->map);
   dmt_free(tm);
 }
 
 
-static int tar_exists(Mount *mnt, const char *filename) {
+static int tar_exists(mount_t *mnt, const char *filename) {
   mtar_header_t h;
   return tar_find(mnt, filename, &h) == FILESYSTEM_ESUCCESS;
 }
 
 
-static int tar_isFile(Mount *mnt, const char *filename) {
+static int tar_isFile(mount_t *mnt, const char *filename) {
   mtar_header_t h;
   int err = tar_find(mnt, filename, &h);
   if (err) {
@@ -276,7 +276,7 @@ static int tar_isFile(Mount *mnt, const char *filename) {
 }
 
 
-static int tar_isDirectory(Mount *mnt, const char *filename) {
+static int tar_isDirectory(mount_t *mnt, const char *filename) {
   mtar_header_t h;
   int err = tar_find(mnt, filename, &h);
   if (err) {
@@ -286,7 +286,7 @@ static int tar_isDirectory(Mount *mnt, const char *filename) {
 }
 
 
-static void* tar_read(Mount *mnt, const char *filename, int *size) {
+static void* tar_read(mount_t *mnt, const char *filename, int *size) {
   mtar_t *tar = mnt->udata;
   int err;
   mtar_header_t h;
@@ -310,28 +310,28 @@ static void* tar_read(Mount *mnt, const char *filename, int *size) {
 
 
 static int tar_stream_read(mtar_t *tar, void *data, unsigned size) {
-  TarMount *tm = tar->stream;
+  tar_mount_t *tm = tar->stream;
   unsigned res = fread(data, 1, size, tm->fp);
   return (res == size) ? MTAR_ESUCCESS : MTAR_EREADFAIL;
 }
 
 
 static int tar_stream_seek(mtar_t *tar, unsigned offset) {
-  TarMount *tm = tar->stream;
+  tar_mount_t *tm = tar->stream;
   int res = fseek(tm->fp, tm->offset + offset, SEEK_SET);
   return (res == 0) ? MTAR_ESUCCESS : MTAR_ESEEKFAIL;
 }
 
 
 static int tar_stream_close(mtar_t *tar) {
-  TarMount *tm = tar->stream;
+  tar_mount_t *tm = tar->stream;
   fclose(tm->fp);
   return MTAR_ESUCCESS;
 }
 
 
-static int tar_mount(Mount *mnt, const char *path) {
-  TarMount *tm = NULL;
+static int tar_mount(mount_t *mnt, const char *path) {
+  tar_mount_t *tm = NULL;
   FILE *fp = NULL;
 
   /* Try to open file */
@@ -340,7 +340,7 @@ static int tar_mount(Mount *mnt, const char *path) {
     goto fail;
   }
 
-  /* Init TarMount */
+  /* Init tar_mount_t */
   tm = dmt_calloc(1, sizeof(*tm));
   tm->fp = fp;
 
@@ -462,7 +462,7 @@ int filesystem_mount(const char *path) {
   if (filesystem_mountIdx >= MAX_MOUNTS) {
     return FILESYSTEM_EFAILURE;
   }
-  Mount *mnt = &filesystem_mounts[filesystem_mountIdx++];
+  mount_t *mnt = &filesystem_mounts[filesystem_mountIdx++];
 
   /* Copy path name */
   strcpy(mnt->path, path);
@@ -487,7 +487,7 @@ int filesystem_unmount(const char *path) {
       mnt->unmount(mnt);
       /* Shift remaining mounts to fill gap and decrement idx */
       int idx = mnt - filesystem_mounts;
-      memmove(mnt, mnt + 1, (filesystem_mountIdx - idx - 1) * sizeof(Mount));
+      memmove(mnt, mnt + 1, (filesystem_mountIdx - idx - 1) * sizeof(mount_t));
       filesystem_mountIdx--;
       return FILESYSTEM_ESUCCESS;
     }
