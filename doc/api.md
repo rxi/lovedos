@@ -90,13 +90,6 @@ Sets the current canvas which all the draw operations will draw to. If the
 `image` argument is not set then the canvas is reset to the default canvas
 representing the user's screen.
 
-##### love.graphics.getFlip()
-Returns true if images are set to be horizontally flipped when drawn
-
-##### love.graphics.setFlip([enable])
-Set whether images should be horizontally flipped when draw. If `enable` is not
-passed then this is set to false by default.
-
 ##### love.graphics.reset()
 Resets the font, color, background color, canvas, blend mode and flip mode to
 their defaults.
@@ -105,9 +98,10 @@ their defaults.
 Clears the screen (or canvas) to the color. If no color argument is given
 then the background color is used (see `love.graphics.setBackgroundColor()`).
 
-##### love.graphics.draw(image [, quad [, x [, y]]])
+##### love.graphics.draw(image [, quad] [, x [, y [, flip]]])
 Draws the `image` to the screen at the given `x`, `y` position. If a `quad`
 argument is provided then the image is clipped to the provided quad when drawn.
+If `flip` is true then the image is flipped horizontally.
 
 ##### love.graphics.point(x, y)
 Draws a pixel.
