@@ -7,6 +7,7 @@
 * [love.timer](#lovetimer)
 * [love.keyboard](#lovekeyboard)
 * [love.mouse](#lovemouse)
+* [love.filesystem](#lovefilesystem)
 
 ##### [Objects](#objects-1)
 * [Image](#image)
@@ -191,6 +192,30 @@ Returns the vertical position of the mouse.
 ##### love.mouse.isDown(button, ...)
 Returns true if any of the given mouse buttons are currently pressed.  `button`
 should be the value `1` (left), `2` (right) or `3` (middle).
+
+
+### love.filesystem
+##### love.filesystem.mount(path)
+Mounts the given path. `path` should be either a directory or tar archive.
+Returns `nil` and an error message on failure.
+
+##### love.filesystem.unmount(path)
+Unmounts the given `path`. Returns `nil` and an error message on failure.
+
+##### love.filesystem.exists(path)
+Returns `true` if the given path exists.
+
+##### love.filesystem.isFile(filename)     
+Returns `true` if `filename` is a file.
+
+##### love.filesystem.isDirectory(dir)
+Returns `true` if `dir` is a directory.
+
+##### love.filesystem.read(filename)
+Reads and returns the contents of the file at `filename`.
+
+##### love.filesystem.write(filename, string)
+Writes `string` to the given `filename` in the game's save directory.
 
 
 ## Objects
