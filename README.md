@@ -2,7 +2,7 @@
 A framework for making 2D DOS games in Lua. LoveDOS provides an API based on a
 subset of the [LÖVE](https://love2d.org/) API.
 
-![screenshot](https://cloud.githubusercontent.com/assets/3920290/3274842/db280102-f334-11e3-9967-f27f01d34d52.gif)
+![screenshot](https://cloud.githubusercontent.com/assets/3920290/21948750/ed49e9a6-d9e4-11e6-960a-1fac0ec41ee0.gif)
 
 ## Getting started
 You can download LoveDOS from the
