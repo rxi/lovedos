@@ -25,7 +25,6 @@ int       graphics_backgroundColor_rgb[3];
 pixel_t   graphics_color;
 int       graphics_color_rgb[3];
 int       graphics_blendMode;
-int       graphics_flip;
 
 
 static int getColorFromArgs(lua_State *L, int *rgb, const int *def) {
@@ -206,19 +205,6 @@ int l_graphics_setCanvas(lua_State *L) {
 }
 
 
-int l_graphics_getFlip(lua_State *L) {
-  lua_pushboolean(L, graphics_flip);
-  return 1;
-}
-
-
-int l_graphics_setFlip(lua_State *L) {
-  int x = lua_isnoneornil(L, 1) ? 0 : lua_toboolean(L, 1);
-  image_setFlip(x);
-  return 0;
-}
-
-
 int l_graphics_reset(lua_State *L) {
   int (*funcs[])(lua_State*) = {
     l_graphics_setBackgroundColor,
@@ -226,7 +212,6 @@ int l_graphics_reset(lua_State *L) {
     l_graphics_setBlendMode,
     l_graphics_setFont,
     l_graphics_setCanvas,
-    l_graphics_setFlip,
     NULL,
   };
   int i;
@@ -255,18 +240,21 @@ int l_graphics_present(lua_State *L) {
 int l_graphics_draw(lua_State *L) {
   image_t *img = luaobj_checkudata(L, 1, LUAOBJ_TYPE_IMAGE);
   quad_t *quad = NULL;
-  int x, y;
+  int x, y, flip;
   if (!lua_isnone(L, 2) && lua_type(L, 2) != LUA_TNUMBER) {
     quad = luaobj_checkudata(L, 2, LUAOBJ_TYPE_QUAD);
     x = luaL_optnumber(L, 3, 0);
     y = luaL_optnumber(L, 4, 0);
+    flip = !lua_isnone(L, 5) && lua_toboolean(L, 5);
   } else {
     x = luaL_optnumber(L, 2, 0);
     y = luaL_optnumber(L, 3, 0);
+    flip = !lua_isnone(L, 4) && lua_toboolean(L, 4);
   }
   pixel_t *buf = graphics_canvas->data;
   int bufw = graphics_canvas->width;
   int bufh = graphics_canvas->height;
+  image_setFlip(flip);
   if (quad) {
     image_blit(img, buf, bufw, bufh, x, y,
                quad->x, quad->y, quad->width, quad->height);
@@ -483,8 +471,6 @@ int luaopen_graphics(lua_State *L) {
     { "setFont",            l_graphics_setFont            },
     { "getCanvas",          l_graphics_getCanvas          },
     { "setCanvas",          l_graphics_setCanvas          },
-    { "getFlip",            l_graphics_getFlip            },
-    { "setFlip",            l_graphics_setFlip            },
     { "reset",              l_graphics_reset              },
     { "clear",              l_graphics_clear              },
     { "present",            l_graphics_present            },
