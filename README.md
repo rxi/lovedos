@@ -28,7 +28,7 @@ end
 
 function love.keypressed(key)
   if key == "escape" then
-    os.exit()
+    love.event.quit()
   end
 end
 ```
