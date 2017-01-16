@@ -21,7 +21,7 @@ int l_keyboard_isDown(lua_State *L) {
   int res = 0;
   int i;
   for (i = 1; i <= n; i++) {
-    const char *key = luaL_checkstring(L, 1);
+    const char *key = luaL_checkstring(L, i);
     res |= keyboard_isDown(key);
   }
   lua_pushboolean(L, res);
