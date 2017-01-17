@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -95,12 +96,22 @@ static int concat_and_get_file_type(const char *dir, const char *filename) {
 }
 
 
-static unsigned hash_string(const char *str) {
+static unsigned hash_string_ignore_case(const char *str) {
   unsigned hash = 5381;
   while (*str) {
-    hash = ((hash << 5) + hash) ^ *str++;
+    hash = ((hash << 5) + hash) ^ tolower(*str++);
   }
   return hash;
+}
+
+
+static int strings_equal_ignore_case(const char *a, const char *b) {
+  while (*a) {
+    if (tolower(*a++) != tolower(*b++)) {
+      return 0;
+    }
+  }
+  return !*b;
 }
 
 
@@ -143,7 +154,7 @@ static int make_dirs(const char *path) {
 
 
 /*==================*/
-/* Directory mount_t  */
+/* Directory mount  */
 /*==================*/
 
 static void dir_unmount(mount_t *mnt) {
@@ -214,7 +225,7 @@ static int dir_mount(mount_t *mnt, const char *path) {
 
 
 /*==================*/
-/* Tar mount_t        */
+/* Tar mount        */
 /*==================*/
 
 typedef struct { unsigned hash, pos; } tar_file_ref_t;
@@ -232,7 +243,7 @@ static int tar_find(mount_t *mnt, const char *filename, mtar_header_t *h) {
   /* Hash filename and linear search map for matching hash, read header and
    * check against filename if the hashes match */
   tar_mount_t *tm = mnt->udata;
-  unsigned hash = hash_string(filename);
+  unsigned hash = hash_string_ignore_case(filename);
   int i;
   for (i = 0; i < tm->nfiles; i++) {
 
@@ -242,7 +253,7 @@ static int tar_find(mount_t *mnt, const char *filename, mtar_header_t *h) {
       mtar_read_header(&tm->tar, h);
       /* Compare names */
       strip_trailing_slash(h->name);
-      if ( !strcmp(h->name, filename) ) {
+      if (strings_equal_ignore_case(h->name, filename)) {
         return FILESYSTEM_ESUCCESS;
       }
     }
@@ -389,7 +400,7 @@ static int tar_mount(mount_t *mnt, const char *path) {
     }
     /* Store entry */
     strip_trailing_slash(h.name);
-    tm->map[n].hash = hash_string(h.name);
+    tm->map[n].hash = hash_string_ignore_case(h.name);
     tm->map[n].pos = tar->pos;
     /* Next */
     mtar_next(tar);
