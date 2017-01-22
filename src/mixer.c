@@ -75,7 +75,7 @@ void mixer_mix(void) {
 
   for(int i = 0; i < activeSources; ++i) {
     mixed_sound_t *snd = sources + i;
-    int len = snd->source->sampleCount;
+    int len = snd->source->sampleCount - snd->offset;
     int16_t const* sourceBuf = snd->source->samples + snd->offset;
 
     if(len > SOUNDBLASTER_SAMPLES_PER_BUFFER) {

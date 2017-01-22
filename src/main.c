@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   /* Init everything */
   atexit(deinit);
   soundblaster_init(mixer_getNextBlock);
-  //vga_init();
+  vga_init();
   palette_init();
   keyboard_init();
   mouse_init();
