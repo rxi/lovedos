@@ -16,6 +16,7 @@ static int       sampleBufferSelector;
 static uint16_t  baseAddress;
 static uint16_t  irq;
 static uint16_t  dmaChannel;
+int isrcount = 0;
 
 #define SAMPLE_BUFFER_SIZE (SOUNDBLASTER_SAMPLES_PER_BUFFER * sizeof(uint16_t) * 2)
 
@@ -89,6 +90,7 @@ int writePage = 0;
 
 static soundblaster_getSampleProc getSamples;
 
+
 static void writeDSP(uint8_t value) {
   while((inportb(baseAddress + BLASTER_WRITE_PORT) & 
           BLASTER_WRITE_BUFFER_STATUS_UNAVAIL) != 0) {}
@@ -97,34 +99,41 @@ static void writeDSP(uint8_t value) {
 }
 
 
+static uint8_t readDSP() {
+  uint8_t status;
+  while(((status = inportb(baseAddress + BLASTER_READ_BUFFER_STATUS_PORT)) 
+        & BLASTER_READ_BUFFER_STATUS_AVAIL) == 0) {
+  }
+
+  return inportb(baseAddress + BLASTER_READ_PORT);
+}
+
+
 static int resetBlaster(void) {
   for(int j = 0; j < 1000; ++j) {
     outportb(baseAddress + BLASTER_RESET_PORT, 1);
     delay(1);
     outportb(baseAddress + BLASTER_RESET_PORT, 0);
-    uint8_t status;
 
-    while(((status = inportb(baseAddress + BLASTER_READ_BUFFER_STATUS_PORT)) 
-          & BLASTER_READ_BUFFER_STATUS_AVAIL) == 0)
-      ;
-
-    if(inportb(baseAddress + BLASTER_READ_PORT) == BLASTER_READY_BYTE)
+    if(readDSP() == BLASTER_READY_BYTE) {
       return 0;
+    }
   }
   return SOUNDBLASTER_RESET_ERROR;
 }
 
 
 static void soundblasterISR(void) {
-  if(stopDma == 1) {
-    writeDSP(BLASTER_EXIT_AUTO_DMA);
-    stopDma = 2;
-  } else {
-    outportb(baseAddress + BLASTER_MIXER_OUT_PORT, 
-             BLASTER_MIXER_INTERRUPT_STATUS);
-    uint8_t status = inportb(baseAddress + BLASTER_MIXER_IN_PORT);
+  outportb(baseAddress + BLASTER_MIXER_OUT_PORT, 
+           BLASTER_MIXER_INTERRUPT_STATUS);
+  uint8_t status = inportb(baseAddress + BLASTER_MIXER_IN_PORT);
 
-    if(status & BLASTER_16BIT_INTERRUPT) {
+  isrcount++;
+  if(status & BLASTER_16BIT_INTERRUPT) {
+    if(stopDma == 1) {
+      writeDSP(BLASTER_EXIT_AUTO_DMA);
+      stopDma = 2;
+    } else {
       uint8_t* dst = (uint8_t*)(sampleBuffer)
         + writePage * SAMPLE_BUFFER_SIZE / 2;
 
@@ -175,11 +184,18 @@ static int parseBlasterSettings(void) {
     return SOUNDBLASTER_ENV_NOT_SET;
   }
 
-  int res = sscanf(blasterEnv, "A%hu I%hu D%hu", &baseAddress, &irq, &dmaChannel);
-
-  if(res < 3) {
+  int res = sscanf(blasterEnv, "A%hx I%hu", &baseAddress, &irq);
+  if(res < 2) {
     return SOUNDBLASTER_ENV_INVALID;
   }
+
+  // "H" field may be preceeded by any number of other fields, so let's just search it
+  char const *dmaLoc = strchr(blasterEnv, 'H');
+  if(dmaLoc == NULL) {
+    return SOUNDBLASTER_ENV_INVALID;
+  }
+
+  dmaChannel = atoi(dmaLoc+1);
 
   return 0;
 }
@@ -241,13 +257,17 @@ static void dmaSetupTransfer(int      channel,
 
   uint8_t modeByte = direction
                    | mode
-                   | (uint8_t)autoReload << 4
-                   | (uint8_t)down       << 5
+                   | ((uint8_t)autoReload << 4)
+                   | ((uint8_t)down       << 5)
                    | (channel & 0x03);
 
   uint8_t maskEnable = (channel & 0x03) | 0x04;
     
   uint32_t offset = startAddress;
+
+  // Special handling of 16 bit DMA channels:
+  // The DMA controller needs offset and count to be half the actual value and
+  // internally doubles it again
   if(channel > 3) {
     offset >>= 1;
     count >>= 1;
@@ -268,7 +288,7 @@ static void dmaSetupTransfer(int      channel,
 
 
 static void startDMAOutput(void) {
-  uint32_t offset = (uint32_t)sampleBuffer;
+  uint32_t offset = ((uint32_t)sampleBuffer) - __djgpp_conventional_base;
 
   uint32_t samples = SAMPLE_BUFFER_SIZE / sizeof(int16_t);
 
@@ -295,24 +315,28 @@ int soundblaster_init(soundblaster_getSampleProc getsamplesproc) {
 
   int err = parseBlasterSettings();
   if(err != 0) {
+    fprintf(stderr, "BLASTER environment variable not set or invalid\n");
     return err;
   }
 
   err = resetBlaster();
   if(err != 0) {
+    fprintf(stderr, "Could not reset Soundblaster\n");
     return err;
   }
 
   err = allocSampleBuffer();
   if(err != 0) {
+    fprintf(stderr, "Could not allocate sample buffer in conventional memory\n");
     return err;
   }
+
+  getSamples = getsamplesproc;
 
   setBlasterISR();
   turnSpeakerOn();
   startDMAOutput();
 
-  getSamples = getsamplesproc;
   return 0;
 }
 

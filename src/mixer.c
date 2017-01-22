@@ -4,20 +4,24 @@
 #include "mixer.h"
 #include "soundblaster.h"
 
-#define MIXER_MAX_SOUNDS 8
+#define MIXER_MAX_SOURCES 8
+
 
 typedef struct {
   int offset;
-  sound_t const *sound;
+  source_t const *source;
 } mixed_sound_t;
 
-static mixed_sound_t sounds[MIXER_MAX_SOUNDS];
-static int activeSounds = 0;
+
+static mixed_sound_t sources[MIXER_MAX_SOURCES];
+static int activeSources = 0;
 static int16_t data[SOUNDBLASTER_SAMPLES_PER_BUFFER] = {0};
 static bool canmix = true;
 
+
 void mixer_init(void) {
 }
+
 
 int16_t const * mixer_getNextBlock(void) {
   canmix = true;
@@ -25,23 +29,24 @@ int16_t const * mixer_getNextBlock(void) {
 }
 
 
-void mixer_play(sound_t const *sound) {
-  if(activeSounds == MIXER_MAX_SOUNDS) {
-    // TODO Replace older sound with new one instead?
+void mixer_play(source_t const *source) {
+  if(activeSources == MIXER_MAX_SOURCES) {
+    // TODO Replace older source with new one instead?
     return;
   }
 
-  for(int i = 0; i < activeSounds; ++i) {
-    if(sounds[i].sound == sound) {
-      sounds[i].offset = 0;
+  for(int i = 0; i < activeSources; ++i) {
+    if(sources[i].source == source) {
+      sources[i].offset = 0;
       return;
     }
   }
 
-  sounds[activeSounds].offset = 0;
-  sounds[activeSounds].sound = sound;
-  ++activeSounds;
+  sources[activeSources].offset = 0;
+  sources[activeSources].source = source;
+  ++activeSources;
 }
+
 
 static inline int16_t mix(int32_t a, int32_t b) {
   int32_t res = a + b;
@@ -59,30 +64,28 @@ void mixer_mix(void) {
 
   memset(data, 0, SOUNDBLASTER_SAMPLES_PER_BUFFER);
 
-  for(int i = 0; i < activeSounds; ++i) {
-    mixed_sound_t *snd = sounds + i;
-    int len = snd->sound->sampleCount;
-    int16_t const* soundBuf = snd->sound->samples;
+  for(int i = 0; i < activeSources; ++i) {
+    mixed_sound_t *snd = sources + i;
+    int len = snd->source->sampleCount;
+    int16_t const* sourceBuf = snd->source->samples;
 
     if(len > SOUNDBLASTER_SAMPLES_PER_BUFFER) {
       len = SOUNDBLASTER_SAMPLES_PER_BUFFER;
     }
 
     for(int offset = 0; offset < len; ++offset) {
-      data[offset] = mix(data[offset], soundBuf[offset]);
+      data[offset] = mix(data[offset], sourceBuf[offset]);
     }
 
     snd->offset += len;
-
-
   }
 
 
-  for(int i = activeSounds-1; i >= 0; --i) {
-    mixed_sound_t *snd = sounds + i;
-    if(snd->offset == snd->sound->sampleCount) {
-      *snd = sounds[activeSounds-1];
-      --activeSounds;
+  for(int i = activeSources-1; i >= 0; --i) {
+    mixed_sound_t *snd = sources + i;
+    if(snd->offset == snd->source->sampleCount) {
+      *snd = sources[activeSources-1];
+      --activeSources;
     }
   }
 

@@ -58,11 +58,11 @@ int main(int argc, char **argv) {
 
   /* Init everything */
   atexit(deinit);
-  vga_init();
+  soundblaster_init(mixer_getNextBlock);
+  //vga_init();
   palette_init();
   keyboard_init();
   mouse_init();
-  soundblaster_init(mixer_getNextBlock);
 
   /* Init lua */
   L = luaL_newstate();
