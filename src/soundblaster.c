@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2017 rnlf
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See LICENSE for details.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -6,21 +13,13 @@
 #include <dpmi.h>
 #include <go32.h>
 #include <sys/nearptr.h>
-
 #include "soundblaster.h"
 
 #define BYTE(val, byte) (((val) >> ((byte) * 8)) & 0xFF)
 
-static uint16_t *sampleBuffer;
-static int       sampleBufferSelector;
-static uint16_t  baseAddress;
-static uint16_t  irq;
-static uint16_t  dmaChannel;
-int isrcount = 0;
-
 #define SAMPLE_BUFFER_SIZE (SOUNDBLASTER_SAMPLES_PER_BUFFER * sizeof(uint16_t) * 2)
 
-// SB16 port offsets
+// SB16
 #define BLASTER_RESET_PORT                   0x6
 #define BLASTER_READ_PORT                    0xA
 #define BLASTER_WRITE_PORT                   0xC
@@ -34,9 +33,6 @@ int isrcount = 0;
 #define BLASTER_READ_BUFFER_STATUS_AVAIL     0x80
 #define BLASTER_WRITE_BUFFER_STATUS_UNAVAIL  0x80
 #define BLASTER_READY_BYTE                   0xAA
-
-
-// SB16 command constants
 #define BLASTER_SET_OUTPUT_SAMPLING_RATE     0x41
 #define BLASTER_PROGRAM_16BIT_IO_CMD         0xB0
 #define BLASTER_PROGRAM_16BIT_FLAG_FIFO      0x02
@@ -59,7 +55,7 @@ int isrcount = 0;
 #define PIC_IRQ8F_MAP  0x70
 
 
-// DMA Data
+// DMA
 #define DMA_DIRECTION_READ_FROM_MEMORY 0x04
 #define DMA_TRANSFER_MODE_BLOCK        0x80
 
@@ -81,13 +77,16 @@ static const struct  {
   { 0xC8, 0xCA, 0xD4, 0xD6, 0xD8, 0x89 },
   { 0xCC, 0xCE, 0xD4, 0xD6, 0xD8, 0x8A }
 };
-int stopDma = 0;
 
-// ISR data
-int isrInstalled = 0;
+static int       stopDma = 0;
+static uint16_t *sampleBuffer;
+static int       sampleBufferSelector;
+static uint16_t  baseAddress;
+static uint16_t  irq;
+static uint16_t  dmaChannel;
+static bool      isrInstalled = false;
+static int       writePage = 0;
 static _go32_dpmi_seginfo oldBlasterHandler, newBlasterHandler;
-int writePage = 0;
-
 static soundblaster_getSampleProc getSamples;
 
 
@@ -128,7 +127,6 @@ static void soundblasterISR(void) {
            BLASTER_MIXER_INTERRUPT_STATUS);
   uint8_t status = inportb(baseAddress + BLASTER_MIXER_IN_PORT);
 
-  isrcount++;
   if(status & BLASTER_16BIT_INTERRUPT) {
     if(stopDma == 1) {
       writeDSP(BLASTER_EXIT_AUTO_DMA);
@@ -157,7 +155,6 @@ static void setBlasterISR(void) {
     ? PIC_IRQ07_MAP
     : PIC_IRQ8F_MAP;
 
-  // Wrap and install ISR
   _go32_dpmi_get_protected_mode_interrupt_vector(interruptVector, 
                                                  &oldBlasterHandler);
 
@@ -165,7 +162,7 @@ static void setBlasterISR(void) {
   newBlasterHandler.pm_selector = _go32_my_cs();
   _go32_dpmi_chain_protected_mode_interrupt_vector(interruptVector, &newBlasterHandler);
 
-  // PIC setup: unmask SB IRQ
+  // PIC: unmask SB IRQ
   if(irq < 8) {
     uint8_t irqmask = inportb(PIC1_DATA);
     outportb(PIC1_DATA, irqmask & ~(1<<irq));
@@ -174,7 +171,7 @@ static void setBlasterISR(void) {
     outportb(PIC2_DATA, irqmask & ~(1<<(irq-8)));
   }
 
-  isrInstalled = 1;
+  isrInstalled = true;
 }
 
 
@@ -347,13 +344,13 @@ static void deallocSampleBuffer(void) {
 
 
 static void resetBlasterISR(void) {
-  if(isrInstalled == 1) {
+  if(isrInstalled) {
     uint16_t interruptVector = irq + irq + (irq < 8)
       ? PIC_IRQ07_MAP
       : PIC_IRQ8F_MAP;
 
     _go32_dpmi_set_protected_mode_interrupt_vector(interruptVector, &oldBlasterHandler);
-    isrInstalled = 0;
+    isrInstalled = false;
   }
 }
 

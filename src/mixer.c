@@ -1,9 +1,17 @@
+/**
+ * Copyright (c) 2017 rnlf
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See LICENSE for details.
+ */
+
 #include <string.h>
 #include <dos.h>
 #include <stdbool.h>
 #include "mixer.h"
 #include "soundblaster.h"
 
+// Configure me!
 #define MIXER_MAX_SOURCES 8
 
 
@@ -14,9 +22,9 @@ typedef struct {
 
 
 static mixed_sound_t sources[MIXER_MAX_SOURCES];
-static int activeSources = 0;
-static int16_t data[SOUNDBLASTER_SAMPLES_PER_BUFFER] = {0};
-static bool canmix = true;
+static int           activeSources                         = 0;
+static int16_t       data[SOUNDBLASTER_SAMPLES_PER_BUFFER] = {0};
+static bool          canmix                                = true;
 
 
 void mixer_init(void) {
@@ -59,15 +67,16 @@ static inline int16_t mix(int32_t a, int32_t b) {
 
 
 void mixer_mix(void) {
-  if(!canmix)
+  if(!canmix) {
     return;
+  }
 
-  memset(data, 0, SOUNDBLASTER_SAMPLES_PER_BUFFER);
+  memset(data, 0, SOUNDBLASTER_SAMPLES_PER_BUFFER * sizeof(int16_t));
 
   for(int i = 0; i < activeSources; ++i) {
     mixed_sound_t *snd = sources + i;
     int len = snd->source->sampleCount;
-    int16_t const* sourceBuf = snd->source->samples;
+    int16_t const* sourceBuf = snd->source->samples + snd->offset;
 
     if(len > SOUNDBLASTER_SAMPLES_PER_BUFFER) {
       len = SOUNDBLASTER_SAMPLES_PER_BUFFER;
@@ -79,7 +88,6 @@ void mixer_mix(void) {
 
     snd->offset += len;
   }
-
 
   for(int i = activeSources-1; i >= 0; --i) {
     mixed_sound_t *snd = sources + i;
