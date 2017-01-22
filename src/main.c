@@ -20,12 +20,15 @@
 #include "image.h"
 #include "palette.h"
 #include "package.h"
+#include "soundblaster.h"
+#include "mixer.h"
 
 
 static lua_State *L;
 
 static void deinit(void) {
   /* Deinit and clear up everything. Called at exit */
+  soundblaster_deinit();
   vga_deinit();
   keyboard_deinit();
   lua_close(L);
@@ -59,6 +62,7 @@ int main(int argc, char **argv) {
   palette_init();
   keyboard_init();
   mouse_init();
+  soundblaster_init(mixer_getNextBlock);
 
   /* Init lua */
   L = luaL_newstate();

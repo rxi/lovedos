@@ -44,6 +44,8 @@ static uint16_t  dmaChannel;
 #define BLASTER_PROGRAM_STEREO               0x20
 #define BLASTER_PROGRAM_SIGNED               0x10
 #define BLASTER_SPEAKER_ON_CMD               0xD1
+#define BLASTER_SPEAKER_OFF_CMD              0xD3
+#define BLASTER_EXIT_AUTO_DMA                0xD9
 
 
 // PIC
@@ -78,8 +80,10 @@ static const struct  {
   { 0xC8, 0xCA, 0xD4, 0xD6, 0xD8, 0x89 },
   { 0xCC, 0xCE, 0xD4, 0xD6, 0xD8, 0x8A }
 };
+int stopDma = 0;
 
 // ISR data
+int isrInstalled = 0;
 static _go32_dpmi_seginfo oldBlasterHandler, newBlasterHandler;
 int writePage = 0;
 
@@ -87,14 +91,13 @@ static soundblaster_getSampleProc getSamples;
 
 static void writeDSP(uint8_t value) {
   while((inportb(baseAddress + BLASTER_WRITE_PORT) & 
-          BLASTER_WRITE_BUFFER_STATUS_UNAVAIL) != 0)
-    ;
+          BLASTER_WRITE_BUFFER_STATUS_UNAVAIL) != 0) {}
 
   outportb(baseAddress + BLASTER_WRITE_PORT, value);
 }
 
 
-static int resetBlaster() {
+static int resetBlaster(void) {
   for(int j = 0; j < 1000; ++j) {
     outportb(baseAddress + BLASTER_RESET_PORT, 1);
     delay(1);
@@ -112,19 +115,24 @@ static int resetBlaster() {
 }
 
 
-static void soundblasterISR() {
-  outportb(baseAddress + BLASTER_MIXER_OUT_PORT, 
-           BLASTER_MIXER_INTERRUPT_STATUS);
-  uint8_t status = inportb(baseAddress + BLASTER_MIXER_IN_PORT);
+static void soundblasterISR(void) {
+  if(stopDma == 1) {
+    writeDSP(BLASTER_EXIT_AUTO_DMA);
+    stopDma = 2;
+  } else {
+    outportb(baseAddress + BLASTER_MIXER_OUT_PORT, 
+             BLASTER_MIXER_INTERRUPT_STATUS);
+    uint8_t status = inportb(baseAddress + BLASTER_MIXER_IN_PORT);
 
-  if(status & BLASTER_16BIT_INTERRUPT) {
-    uint8_t* dst = (uint8_t*)(sampleBuffer)
-      + writePage * SAMPLE_BUFFER_SIZE / 2;
+    if(status & BLASTER_16BIT_INTERRUPT) {
+      uint8_t* dst = (uint8_t*)(sampleBuffer)
+        + writePage * SAMPLE_BUFFER_SIZE / 2;
 
-    memcpy(dst, getSamples(), SAMPLE_BUFFER_SIZE / 2);
+      memcpy(dst, getSamples(), SAMPLE_BUFFER_SIZE / 2);
 
-    writePage = 1 - writePage;
-    inportb(baseAddress + BLASTER_INTERRUPT_ACKNOWLEDGE_16BIT);
+      writePage = 1 - writePage;
+      inportb(baseAddress + BLASTER_INTERRUPT_ACKNOWLEDGE_16BIT);
+    }
   }
 
   if(irq >= 8) {
@@ -134,7 +142,7 @@ static void soundblasterISR() {
 }
 
 
-static void setBlasterISR() {
+static void setBlasterISR(void) {
   // Map IRQ to interrupt number on the CPU
   uint16_t interruptVector = irq + irq + (irq < 8)
     ? PIC_IRQ07_MAP
@@ -156,6 +164,8 @@ static void setBlasterISR() {
     uint8_t irqmask = inportb(PIC2_DATA);
     outportb(PIC2_DATA, irqmask & ~(1<<(irq-8)));
   }
+
+  isrInstalled = 1;
 }
 
 
@@ -175,7 +185,7 @@ static int parseBlasterSettings(void) {
 }
 
 
-static int allocSampleBuffer() {
+static int allocSampleBuffer(void) {
   static int maxRetries = 10;
   int selectors[maxRetries];
   int current;
@@ -211,8 +221,13 @@ static int allocSampleBuffer() {
 }
 
 
-static void turnSpeakerOn() {
+static void turnSpeakerOn(void) {
   writeDSP(BLASTER_SPEAKER_ON_CMD);
+}
+
+
+static void turnSpeakerOff(void) {
+  writeDSP(BLASTER_SPEAKER_OFF_CMD);
 }
 
 
@@ -252,7 +267,7 @@ static void dmaSetupTransfer(int      channel,
 }
 
 
-static void startDMAOutput() {
+static void startDMAOutput(void) {
   uint32_t offset = (uint32_t)sampleBuffer;
 
   uint32_t samples = SAMPLE_BUFFER_SIZE / sizeof(int16_t);
@@ -302,6 +317,33 @@ int soundblaster_init(soundblaster_getSampleProc getsamplesproc) {
 }
 
 
-void soundblaster_deinit(void) {
+static void deallocSampleBuffer(void) {
+  __dpmi_free_dos_memory(sampleBufferSelector);
+}
 
+
+static void resetBlasterISR(void) {
+  if(isrInstalled == 1) {
+    uint16_t interruptVector = irq + irq + (irq < 8)
+      ? PIC_IRQ07_MAP
+      : PIC_IRQ8F_MAP;
+
+    _go32_dpmi_set_protected_mode_interrupt_vector(interruptVector, &oldBlasterHandler);
+    isrInstalled = 0;
+  }
+}
+
+
+static void stopDMAOutput(void) {
+  stopDma = 1;
+  while(stopDma == 1) {}
+}
+
+
+void soundblaster_deinit(void) {
+  turnSpeakerOff();
+  stopDMAOutput();
+  resetBlaster();
+  resetBlasterISR();
+  deallocSampleBuffer();
 }
