@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2017 rnlf
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See LICENSE for details.
+ */
+
 #include <string.h>
 #include "filesystem.h"
 #include "wavefile.h"
@@ -32,6 +39,11 @@ char const* wavefile_load(source_t *source, char const *filename) {
   int fileSize;
   char const *err = 0;
   uint8_t *waveData = filesystem_read(filename, &fileSize);
+
+  if(waveData == NULL) {
+    err = "Could not read WAV file";
+    goto fail;
+  }
 
   waveheader_t const* header = (waveheader_t const*)waveData;
 
