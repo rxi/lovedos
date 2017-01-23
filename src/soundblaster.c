@@ -78,14 +78,14 @@ static const struct  {
   { 0xCC, 0xCE, 0xD4, 0xD6, 0xD8, 0x8A }
 };
 
-static int       stopDma = 0;
-static uint16_t *sampleBuffer;
-static int       sampleBufferSelector;
-static uint16_t  baseAddress;
-static uint16_t  irq;
-static uint16_t  dmaChannel;
-static bool      isrInstalled = false;
-static int       writePage = 0;
+static volatile int  stopDma = 0;
+static uint16_t     *sampleBuffer;
+static int           sampleBufferSelector;
+static uint16_t      baseAddress;
+static uint16_t      irq;
+static uint16_t      dmaChannel;
+static bool          isrInstalled = false;
+static int           writePage = 0;
 static _go32_dpmi_seginfo oldBlasterHandler, newBlasterHandler;
 static soundblaster_getSampleProc getSamples;
 
