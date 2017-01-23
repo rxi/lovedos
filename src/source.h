@@ -13,6 +13,7 @@
 typedef struct  {
   int sampleCount;
   int16_t *samples;
+  void *data;
 } source_t;
 
 char const* source_init(source_t *self, char const* filename);
