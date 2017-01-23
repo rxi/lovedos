@@ -27,10 +27,6 @@ static int16_t       data[SOUNDBLASTER_SAMPLES_PER_BUFFER] = {0};
 static bool          canmix                                = true;
 
 
-void mixer_init(void) {
-}
-
-
 int16_t const * mixer_getNextBlock(void) {
   canmix = true;
   return data;
