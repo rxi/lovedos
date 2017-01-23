@@ -1,10 +1,11 @@
 /**
- * Copyright (c) 2017 rnlf
+ * Copyright (c) 2017 Florian Kesseler
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the MIT license. See LICENSE for details.
  */
 
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -86,6 +87,7 @@ static uint16_t      irq;
 static uint16_t      dmaChannel;
 static bool          isrInstalled = false;
 static int           writePage = 0;
+static bool          blasterInitialized = false;
 static _go32_dpmi_seginfo oldBlasterHandler, newBlasterHandler;
 static soundblaster_getSampleProc getSamples;
 
@@ -108,10 +110,27 @@ static uint8_t readDSP() {
 }
 
 
+static inline void delay3us() {
+  uint64_t waited = 0;
+  uclock_t lastTime = uclock();
+  while(waited < (3*UCLOCKS_PER_SEC) / 1000000) {
+    uclock_t nowTime = uclock();
+
+    // Just ignore timer wraps. In the worst case we get a slightly
+    // longer delay, but who cares?
+    if(nowTime > lastTime) {
+      waited += nowTime - lastTime;
+    }
+
+    lastTime = nowTime;
+  }
+}
+
+
 static int resetBlaster(void) {
   for(int j = 0; j < 1000; ++j) {
     outportb(baseAddress + BLASTER_RESET_PORT, 1);
-    delay(1);
+    delay3us();
     outportb(baseAddress + BLASTER_RESET_PORT, 0);
 
     if(readDSP() == BLASTER_READY_BYTE) {
@@ -334,6 +353,8 @@ int soundblaster_init(soundblaster_getSampleProc getsamplesproc) {
   turnSpeakerOn();
   startDMAOutput();
 
+  blasterInitialized = true;
+
   return 0;
 }
 
@@ -362,9 +383,12 @@ static void stopDMAOutput(void) {
 
 
 void soundblaster_deinit(void) {
-  turnSpeakerOff();
-  stopDMAOutput();
-  resetBlaster();
-  resetBlasterISR();
-  deallocSampleBuffer();
+  if(blasterInitialized) {
+    turnSpeakerOff();
+    stopDMAOutput();
+    resetBlaster();
+    resetBlasterISR();
+    deallocSampleBuffer();
+    blasterInitialized = false;
+  }
 }
