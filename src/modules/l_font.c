@@ -14,7 +14,7 @@
 
 int l_font_new(lua_State *L) {
   const char *filename;
-  int ptsize = 12;
+  int ptsize = 8;
   if ( lua_isnoneornil(L, 2) ) {
     filename = NULL;
     ptsize = luaL_optnumber(L, 1, ptsize);

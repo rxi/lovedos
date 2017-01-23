@@ -101,7 +101,7 @@ fail:
 
 const char *font_initEmbedded(font_t *self, int ptsize) {
   #include "font_ttf.h"
-  return initFont(self, font_ttf, 8);
+  return initFont(self, font_ttf, ptsize);
 }
 
 
