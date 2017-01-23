@@ -104,6 +104,7 @@ function love.run()
     love.graphics.clear()
     if love.draw then love.draw() end
     love.graphics.present()
+    love.sound.mix()
   end
 end
 
