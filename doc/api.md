@@ -224,18 +224,6 @@ Writes `string` to the given `filename` in the game's save directory.
 Pushes the `quit` event with the given `status`. `status` is `0` by default.
 
 
-### love.sound
-##### love.sound.newSource(filename)
-Creates a new sound source from the given `filename`.
-At the moment only one file and audio format is supported: 16 bit signed PCM mono WAVE files at 22050Hz. Everything else
-will result in a load error.
-
-
-### love.sound.mix()
-Must be called once per frame to mix the playing audio sources for submission to the soundblaster driver.
-It's automatically called by the default love.run() implementation.
-
-
 ## Objects
 ### Image
 A loaded image or canvas which can be drawn.
@@ -281,13 +269,6 @@ this font.
 
 ##### Font:getHeight()
 Returns the height of the font in pixels.
-
-
-### Source
-A sound source used by the audio subsystem.
-
-##### Source:play()
-Starts playing the source.
 
 
 ## Callbacks
