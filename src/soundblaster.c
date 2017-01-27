@@ -18,7 +18,10 @@
 
 #define BYTE(val, byte) (((val) >> ((byte) * 8)) & 0xFF)
 
+#define SOUNDBLASTER_SAMPLES_PER_BUFFER 2048
 #define SAMPLE_BUFFER_SIZE (SOUNDBLASTER_SAMPLES_PER_BUFFER * sizeof(uint16_t) * 2)
+#define SAMPLE_RATE 22050
+
 
 // SB16
 #define BLASTER_RESET_PORT                   0x6
@@ -36,9 +39,10 @@
 #define BLASTER_READY_BYTE                   0xAA
 #define BLASTER_SET_OUTPUT_SAMPLING_RATE     0x41
 #define BLASTER_PROGRAM_16BIT_IO_CMD         0xB0
-#define BLASTER_PROGRAM_16BIT_FLAG_FIFO      0x02
-#define BLASTER_PROGRAM_16BIT_FLAG_AUTO_INIT 0x04
-#define BLASTER_PROGRAM_16BIT_FLAG_INPUT     0x08
+#define BLASTER_PROGRAM_FLAG_FIFO            0x02
+#define BLASTER_PROGRAM_FLAG_AUTO_INIT       0x04
+#define BLASTER_PROGRAM_FLAG_INPUT           0x08
+#define BLASTER_PROGRAM_8BIT_IO_CMD          0xC0
 #define BLASTER_PROGRAM_STEREO               0x20
 #define BLASTER_PROGRAM_SIGNED               0x10
 #define BLASTER_SPEAKER_ON_CMD               0xD1
@@ -313,11 +317,11 @@ static void startDMAOutput(void) {
 
   // SB16 setup
   writeDSP(BLASTER_SET_OUTPUT_SAMPLING_RATE);
-  writeDSP(BYTE(22050, 1));
-  writeDSP(BYTE(22050, 0));
+  writeDSP(BYTE(SAMPLE_RATE, 1));
+  writeDSP(BYTE(SAMPLE_RATE, 0));
   writeDSP(BLASTER_PROGRAM_16BIT_IO_CMD
-            | BLASTER_PROGRAM_16BIT_FLAG_AUTO_INIT
-            | BLASTER_PROGRAM_16BIT_FLAG_FIFO);
+            | BLASTER_PROGRAM_FLAG_AUTO_INIT
+            | BLASTER_PROGRAM_FLAG_FIFO);
   writeDSP(BLASTER_PROGRAM_SIGNED);
   writeDSP(BYTE(samples/2-1, 0));
   writeDSP(BYTE(samples/2-1, 1));
@@ -391,4 +395,14 @@ void soundblaster_deinit(void) {
     deallocSampleBuffer();
     blasterInitialized = false;
   }
+}
+
+
+int soundblaster_getSampleRate(void) {
+  return SAMPLE_RATE;
+}
+
+
+int soundblaster_getSampleBufferSize(void) {
+  return SOUNDBLASTER_SAMPLES_PER_BUFFER;
 }
