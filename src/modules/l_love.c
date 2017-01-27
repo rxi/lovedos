@@ -26,6 +26,8 @@ int luaopen_graphics(lua_State *L);
 int luaopen_timer(lua_State *L);
 int luaopen_keyboard(lua_State *L);
 int luaopen_mouse(lua_State *L);
+int luaopen_sound(lua_State *L);
+int luaopen_source(lua_State *L);
 
 int luaopen_love(lua_State *L) {
   int i;
@@ -36,6 +38,7 @@ int luaopen_love(lua_State *L) {
     luaopen_image,
     luaopen_quad,
     luaopen_font,
+    luaopen_source,
     NULL,
   };
   for (i = 0; classes[i]; i++) {
@@ -59,6 +62,7 @@ int luaopen_love(lua_State *L) {
     { "timer",      luaopen_timer       },
     { "keyboard",   luaopen_keyboard    },
     { "mouse",      luaopen_mouse       },
+    { "sound",      luaopen_sound       },
     { 0 },
   };
   for (i = 0; mods[i].name; i++) {
