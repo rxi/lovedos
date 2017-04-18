@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2017 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -25,10 +25,9 @@ typedef struct {
 #define LUAOBJ_TYPE_IMAGE  (1 << 0)
 #define LUAOBJ_TYPE_QUAD   (1 << 1)
 #define LUAOBJ_TYPE_FONT   (1 << 2)
-#define LUAOBJ_TYPE_SOURCE (1 << 3)
 
 
-int luaobj_newclass(lua_State *L, const char *name, const char *extends, 
+int luaobj_newclass(lua_State *L, const char *name, const char *extends,
                     int (*constructor)(lua_State*), luaL_Reg* reg);
 void luaobj_setclass(lua_State *L, uint32_t type, char *name);
 void *luaobj_newudata(lua_State *L, int size);
