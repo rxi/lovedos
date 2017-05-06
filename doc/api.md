@@ -8,12 +8,14 @@
 * [love.keyboard](#lovekeyboard)
 * [love.mouse](#lovemouse)
 * [love.filesystem](#lovefilesystem)
+* [love.audio](#loveaudio)
 * [love.event](#loveevent)
 
 ##### [Objects](#objects-1)
 * [Image](#image)
 * [Quad](#quad)
 * [Font](#font)
+* [Source](#source)
 
 ##### [Callbacks](#callbacks-1)
 
@@ -219,6 +221,15 @@ Reads and returns the contents of the file at `filename`.
 Writes `string` to the given `filename` in the game's save directory.
 
 
+### love.audio
+##### love.audio.newSource(filename)
+Creates and returns a new audio source. `filename` should the filename of the
+`.wav` file to load.
+
+##### love.audio.setVolume(volume)
+Sets the master volume, by default this is `1`.
+
+
 ### love.event
 ##### love.event.quit([status])
 Pushes the `quit` event with the given `status`. `status` is `0` by default.
@@ -269,6 +280,44 @@ this font.
 
 ##### Font:getHeight()
 Returns the height of the font in pixels.
+
+
+### Source
+##### Source:setVolume(volume)
+Sets the volume -- by default this is `1`.
+
+##### Source:setPitch(pitch)
+Sets the pitch (playback speed). By default this is `1`. `0.5` is half the
+pitch, `2` is double the pitch.
+
+##### Source:setLooping(enable)
+Enables looping if `enable` is `true`. By default looping is disabled.
+
+##### Source:getDuration()
+Gets the length in seconds of the source's audio data.
+
+##### Source:isPlaying()
+Returns `true` if the source is currently playing.
+
+##### Source:isPaused()
+Returns `true` if the source is currently paused.
+
+##### Source:isStopped()
+Returns `true` if the source is currently stopped.
+
+##### Source:tell()
+Returns the current playback position in seconds.
+
+##### Source:play()
+Plays the audio source. If the source is already playing then this function has
+no effect. To play back from the start call `Source:stop()` before calling this
+function.
+
+##### Source:pause()
+Pauses the source's playback. This stops playback without losing the current position, calling `Source:play()` will continue playing where it left off.
+
+##### Source:stop()
+Stops playing and rewinds the source's play position back to the beginning.
 
 
 ## Callbacks
